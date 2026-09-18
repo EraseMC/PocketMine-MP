@@ -15,7 +15,7 @@ if($php -ne ""){
 	$binary = "php"
 }else{
 	echo "Couldn't find a PHP binary in system PATH or $pwd\bin\php"
-	echo "Please refer to the installation instructions at https://doc.pmmp.io/en/rtfd/installation.html"
+	echo "Please refer to the building guide at https://github.com/EraseMC/PocketMine-MP/blob/stable/BUILDING.md"
 	pause
 	exit 1
 }
@@ -25,7 +25,7 @@ if($file -eq ""){
 	    $file = "PocketMine-MP.phar"
 	}else{
 	    echo "PocketMine-MP.phar not found"
-	    echo "Downloads can be found at https://github.com/pmmp/PocketMine-MP/releases"
+	    echo "Downloads can be found at https://github.com/EraseMC/PocketMine-MP/releases"
 	    pause
 	    exit 1
 	}

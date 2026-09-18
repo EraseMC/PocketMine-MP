@@ -98,7 +98,7 @@ level-settings:
   #The default format that worlds will use when created
   default-format: leveldb
   #The minimum Y level an entity can go before taking damage from the void
-  #Default PM sets this as -80 but NetherGames makes this configurable and the default is 0
+  #The default is configurable for EraseMC builds and is 0 by default
   min-y: 0
 
 chunk-sending:
@@ -129,31 +129,34 @@ ticks-per:
 
 auto-report:
   #Send crash reports for processing
-  enabled: true
+  #Disabled until EraseMC operates its own crash archive endpoint.
+  enabled: false
   send-code: true
   send-settings: true
   send-phpinfo: false
   use-https: true
-  host: crash.axolotl-pm.org
+  host: crash.erasemc.invalid
 
 anonymous-statistics:
   #Sends anonymous statistics for data aggregation, plugin usage tracking
-  enabled: false #TODO: re-enable this when we have a new stats host
-  host: stats.pocketmine.net
+  #Disabled until EraseMC operates its own statistics endpoint.
+  enabled: false
+  host: stats.erasemc.invalid
 
 auto-updater:
-  enabled: true
+  #Disabled until EraseMC operates its own update API endpoint.
+  enabled: false
   on-update:
     warn-console: true
   #Can be development, alpha, beta or stable.
   preferred-channel: stable
   #If using a development version, it will suggest changing the channel
   suggest-channels: true
-  host: update.axolotl-pm.org
+  host: updates.erasemc.invalid
 
 timings:
   #Choose the host to use for viewing your timings results.
-  host: timings.axolotl-pm.org
+  host: timings.erasemc.invalid
 
 console:
   #Whether to accept commands via the console. If disabled, anything typed on the console will be ignored.

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c284223f3c47c2b756ca3c305a85239",
+    "content-hash": "58558366f4d31a9f0825d226e8c47a4e",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -220,16 +220,16 @@
             "time": "2025-03-29T13:50:30+00:00"
         },
         {
-            "name": "nethergamesmc/bedrock-data",
+            "name": "erasemc/bedrock-data",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/kostamax27/BedrockData-NG.git",
+                "url": "https://github.com/EraseMC/BedrockData.git",
                 "reference": "8061304f23c1cc32c07e6d1a61043f020437d401"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kostamax27/BedrockData-NG/zipball/8061304f23c1cc32c07e6d1a61043f020437d401",
+                "url": "https://api.github.com/repos/EraseMC/BedrockData/zipball/8061304f23c1cc32c07e6d1a61043f020437d401",
                 "reference": "8061304f23c1cc32c07e6d1a61043f020437d401",
                 "shasum": ""
             },
@@ -238,23 +238,24 @@
             "license": [
                 "CC0-1.0"
             ],
-            "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
+            "description": "EraseMC's data generated from Minecraft: Bedrock Edition",
             "support": {
-                "source": "https://github.com/kostamax27/BedrockData-NG/tree/master"
+                "issues": "https://github.com/EraseMC/BedrockData/issues",
+                "source": "https://github.com/EraseMC/BedrockData/tree/master"
             },
             "time": "2026-09-18T01:25:16+00:00"
         },
         {
-            "name": "nethergamesmc/bedrock-protocol",
+            "name": "erasemc/bedrock-protocol",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/kostamax27/BedrockProtocol-NG.git",
+                "url": "https://github.com/EraseMC/BedrockProtocol.git",
                 "reference": "a6287e271f96890cabff432643c00e4bc532097b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kostamax27/BedrockProtocol-NG/zipball/a6287e271f96890cabff432643c00e4bc532097b",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/a6287e271f96890cabff432643c00e4bc532097b",
                 "reference": "a6287e271f96890cabff432643c00e4bc532097b",
                 "shasum": ""
             },
@@ -294,9 +295,10 @@
             "license": [
                 "LGPL-3.0"
             ],
-            "description": "An implementation of the Minecraft: Bedrock Edition protocol in PHP",
+            "description": "EraseMC's implementation of the Minecraft: Bedrock Edition protocol in PHP",
             "support": {
-                "source": "https://github.com/kostamax27/BedrockProtocol-NG/tree/master"
+                "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
+                "source": "https://github.com/EraseMC/BedrockProtocol/tree/master"
             },
             "time": "2026-09-18T00:52:17+00:00"
         },
@@ -2823,8 +2825,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "nethergamesmc/bedrock-data": 20,
-        "nethergamesmc/bedrock-protocol": 20
+        "erasemc/bedrock-data": 20,
+        "erasemc/bedrock-protocol": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

@@ -1,8 +1,20 @@
 {
-   "name": "nethergamesmc/pocketmine-mp",
-   "description": "A server software for Minecraft: Bedrock Edition written in PHP",
+   "name": "erasemc/pocketmine-mp",
+   "description": "EraseMC's server software for Minecraft: Bedrock Edition written in PHP",
    "type": "project",
-   "homepage": "https://pmmp.io",
+   "homepage": "https://github.com/EraseMC/PocketMine-MP",
+   "support": {
+      "issues": "https://github.com/EraseMC/PocketMine-MP/issues",
+      "source": "https://github.com/EraseMC/PocketMine-MP"
+   },
+   "keywords": [
+      "erasemc",
+      "minecraft",
+      "bedrock",
+      "server",
+      "pocketmine",
+      "php"
+   ],
    "license": "LGPL-3.0",
    "require": {
       "php": "^8.1",
@@ -34,9 +46,9 @@
       "composer-runtime-api": "^2.0",
       "adhocore/json-comment": "~1.2.0",
       "axolotl-pm/bedrock-block-upgrade-schema": "~5.4.1+bedrock-1.26.50",
-      "nethergamesmc/bedrock-data": "dev-master",
+      "erasemc/bedrock-data": "dev-master",
       "axolotl-pm/bedrock-item-upgrade-schema": "~1.19.0+bedrock-1.26.50",
-      "nethergamesmc/bedrock-protocol": "dev-master",
+      "erasemc/bedrock-protocol": "dev-master",
       "axolotl-pm/xoroshiro128pp": "^0.1.0",
       "netresearch/jsonmapper": "~v6.0.0",
       "pocketmine/binaryutils": "^0.2.1",
@@ -95,8 +107,8 @@
       "update-codegen": [
          "@php build/codegen/bedrockdata-path-consts.php",
          "@php build/codegen/biome-ids.php",
-         "@php build/codegen/block-serializer-consts.php vendor/nethergamesmc/bedrock-data/canonical_block_states.nbt",
-         "@php build/codegen/item-type-names.php vendor/nethergamesmc/bedrock-data/required_item_list.json",
+         "@php build/codegen/block-serializer-consts.php vendor/erasemc/bedrock-data/canonical_block_states.nbt",
+         "@php build/codegen/item-type-names.php vendor/erasemc/bedrock-data/required_item_list.json",
          "@php build/codegen/known-translation-apis.php",
          "@php build/codegen/pocketmine-yml-property-consts.php",
          "@php build/codegen/registry-interface.php src generated"
@@ -105,11 +117,11 @@
    "repositories": [
       {
          "type": "vcs",
-         "url":  "git@github.com:kostamax27/BedrockProtocol-NG.git"
+         "url": "https://github.com/EraseMC/BedrockProtocol.git"
       },
       {
          "type": "vcs",
-         "url":  "git@github.com:kostamax27/BedrockData-NG.git"
+         "url": "https://github.com/EraseMC/BedrockData.git"
       }
    ]
 }

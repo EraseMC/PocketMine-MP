@@ -1,14 +1,11 @@
-Code contributions must be submitted using [GitHub Pull Requests](https://github.com/pmmp/PocketMine-MP/pulls), where they will be reviewed by maintainers.
+Code contributions must be submitted using [GitHub Pull Requests](https://github.com/EraseMC/PocketMine-MP/pulls), where they will be reviewed by EraseMC maintainers.
 
 Small contributions (e.g. minor bug fixes) can be submitted as pull requests directly.
 
 Larger contributions like feature additions should be preceded by a [Change Proposal](#rfcs--change-proposals) to allow maintainers and other people to discuss and decide if it's a good idea or not.
 
 > [!TIP]
-> Want to contribute (non-English) translations? Visit our
-> [Weblate Translation Project](https://translate.axolotl-pm.org) instead.
->
-> Translations need to go through a different review process, so we can't accept changes to them in PRs.
+> Translation workflow will be documented when the EraseMC localization service is enabled.
 
 ## Useful documentation from github.com
 - [About pull requests](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests)
@@ -19,14 +16,14 @@ Larger contributions like feature additions should be preceded by a [Change Prop
 - [git](https://git-scm.com/)
 
 ## List of `pocketmine` namespaces which are in other repos
-PocketMine-MP has several dependencies which are independent from the main server code. Most of them use the `pocketmine` namespace.
+EraseMC Core has several dependencies which are independent from the main server code. Most of them use the `pocketmine` namespace.
 Some of these add extra classes to packages which already exist in PocketMine-MP.
 
 Take a look at the table below if you can't find the class or function you're looking for.
 
 | Source URL                                                      | Namespace, class or function                                                                                                             |
 |:----------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
-| [pmmp/BedrockProtocol](https://github.com/pmmp/BedrockProtocol) | `pocketmine\network\mcpe\protocol`                                                                                                       |
+| [EraseMC/BedrockProtocol](https://github.com/EraseMC/BedrockProtocol) | `pocketmine\network\mcpe\protocol`                                                                                                       |
 | [pmmp/BinaryUtils](https://github.com/pmmp/BinaryUtils)         | `pocketmine\utils\BinaryDataException`</br>`pocketmine\utils\BinaryStream`</br>`pocketmine\utils\Binary`                                 |
 | [pmmp/Color](https://github.com/pmmp/Color)                     | `pocketmine\color`                                                                                                                       |
 | [pmmp/ErrorHandler](https://github.com/pmmp/ErrorHandler)       | `pocketmine\errorhandler`                                                                                                                |
@@ -41,7 +38,7 @@ Take a look at the table below if you can't find the class or function you're lo
 | [pmmp/ext-libdeflate](https://github.com/pmmp/ext-libdeflate)   | `libdeflate_deflate_compress`</br>`libdeflate_gzip_compress`</br>`libdeflate_zlib_compress`                                              |
 
 ## Choosing a target branch
-PocketMine-MP has three primary branches of development.
+EraseMC Core has three primary branches of development.
 
 | Type of change                                                                                           | `stable` |          `minor-next`           | `major-next` |
 |:---------------------------------------------------------------------------------------------------------|:--------:|:-------------------------------:|:------------:|
@@ -75,14 +72,14 @@ PocketMine-MP has three primary branches of development.
 
 ## Making a pull request
 The basic procedure to create a pull request is:
-1. [Fork the repository on GitHub](https://github.com/pmmp/PocketMine-MP/fork). This gives you your own copy of the repository to make changes to.
+1. [Fork the repository on GitHub](https://github.com/EraseMC/PocketMine-MP/fork). This gives you your own copy of the repository to make changes to.
 2. Create a branch on your fork for your changes.
 3. Make the changes you want to make on this branch.
-4. You can then make a [pull request](https://github.com/pmmp/PocketMine-MP/pull/new) to the project.
+4. You can then make a [pull request](https://github.com/EraseMC/PocketMine-MP/pull/new) to the project.
 
 ## Tests and quality checks
 
-PocketMine-MP uses several tools to enforce code quality standards.
+EraseMC Core uses several tools to enforce code quality standards.
 You can use these tools to check your code locally before you commit, which helps catch mistakes more quickly, and saves both your energy and maintainers' for reviewing logic, instead of formatting, syntax and other boring stuff.
 
 | Tool | Purpose | Installing | Running |
@@ -111,7 +108,7 @@ Depending on the changes, maintainers might ask you to make changes to the PR to
 > Don't worry about getting a PR perfect on the first try.
 > In fact, it's quite unusual for a PR to be perfect when it's first submitted, and most PRs will get changes requested by reviewers, even when the PR is made by one of our team members.
 >
-> Mistakes are normal, and PMMP team members will review your code and suggest changes to your code as needed.
+> Mistakes are normal, and EraseMC maintainers will review your code and suggest changes as needed.
 > Just make sure to stick with it so you can communicate with reviewers and/or make changes.
 
 ### Requirements
@@ -122,7 +119,7 @@ The following are required as a minimum for pull requests. PRs that don't meet t
 - **Don't make unnecessary changes.** Unnecessary changes make a PR harder to review, more likely to develop conflicts, and more likely to be declined.
 - **Tell us what tests have been done.** Ideally, include PHPUnit tests in your PR. If that's not possible (e.g. for in-game functionality), give details about playtesting (e.g. screenshots and videos).
 - **Code, comments and documentation must be written in American English.**
-- **Code must be in the PocketMine-MP style.**
+- **Code must follow the established EraseMC Core style.**
   - If you use PhpStorm, a `Project` code style is provided, which you can use to automatically format new code.
   - You can also use [`php-cs-fixer`](https://github.com/FriendsOfPHP/PHP-CS-Fixer) to format your code.
 - **Use `final`, `private` and `readonly` wherever possible**. This allows us to change more things later on if needed without breaking plugins (including making things non-final, writable or increasing visibility).
@@ -132,7 +129,7 @@ The following are required as a minimum for pull requests. PRs that don't meet t
 - **Be patient.** Maintainers are often unavailable or busy. Your PR might not receive attention for a while.
 - **Start small.**
   - This helps you get familiar with the codebase, the contribution process, and the expectations of maintainers.
-  - Check out ["Easy task" issues](https://github.com/pmmp/PocketMine-MP/issues?q=is%3Aissue+is%3Aopen+label%3A%22Easy+task%22) on the issues page for something that you could tackle without too much effort.
+  - Check out the [open issues](https://github.com/EraseMC/PocketMine-MP/issues) for things you could work on to familiarise yourself with the codebase.
 - **Try to keep your PR diff small.** Small PRs can be reviewed and merged much more quickly than bigger ones.
 - **Do not copy-paste other people's code (or code written by AIs like ChatGPT)**. You'll likely be asked to make changes by reviewers. If you don't understand the code you're submitting, your PR is likely to fail.
 - **Do not edit code directly on github.com.** We recommend learning how to use [`git`](https://git-scm.com).
@@ -143,7 +140,7 @@ The following are required as a minimum for pull requests. PRs that don't meet t
 - **Create a new branch on your fork for each pull request.** This allows you to use the same fork to make multiple pull requests at the same time.
 - **Run quality tools like PHPStan locally before you commit.** See the section above about [tests and quality tools](#tests-and-quality-checks).
 
-**Thanks for contributing to PocketMine-MP!**
+**Thanks for contributing to EraseMC Core!**
 
 ## RFCs / Change Proposals
 Change Proposals are issues or discussions which describe a new feature proposal or behavioural change.

@@ -12,10 +12,9 @@ composer config repositories.bedrock-data path ../deps/BedrockData
 composer config repositories.bedrock-block-upgrade-schema path ../deps/BedrockBlockUpgradeSchema
 composer config repositories.bedrock-item-upgrade-schema path ../deps/BedrockItemUpgradeSchema
 
-composer require nethergamesmc/bedrock-protocol:*@dev nethergamesmc/bedrock-data:*@dev axolotl-pm/bedrock-block-upgrade-schema:*@dev axolotl-pm/bedrock-item-upgrade-schema:*@dev
+composer require erasemc/bedrock-protocol:*@dev erasemc/bedrock-data:*@dev axolotl-pm/bedrock-block-upgrade-schema:*@dev axolotl-pm/bedrock-item-upgrade-schema:*@dev
 
 composer install
 
 echo "--- Local dependencies have been successfully installed."
 echo "--- This script does not modify composer.json. To go back to the original dependency versions, simply run 'composer install'."
-

@@ -1,0 +1,4 @@
+# Default maintainers for the EraseMC Core repository.
+# Create the `core-maintainers` team in the EraseMC organization before enabling
+# required reviews from this file in repository settings.
+* @EraseMC/core-maintainers
