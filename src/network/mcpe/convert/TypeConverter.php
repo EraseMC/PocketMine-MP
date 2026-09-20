@@ -183,6 +183,9 @@ class TypeConverter{
 				$descriptor = new IntIdMetaItemDescriptor($id, $meta);
 			}
 		}elseif($ingredient instanceof TagWildcardRecipeIngredient){
+			if($this->protocolId < ProtocolInfo::PROTOCOL_1_19_30){
+				throw new \InvalidArgumentException("TagWildcardRecipeIngredient is not supported before 1.19.30");
+			}
 			$descriptor = new TagItemDescriptor($ingredient->getTagName());
 		}else{
 			throw new \LogicException("Unsupported recipe ingredient type " . get_class($ingredient) . ", only " . ExactRecipeIngredient::class . " and " . MetaWildcardRecipeIngredient::class . " are supported");
