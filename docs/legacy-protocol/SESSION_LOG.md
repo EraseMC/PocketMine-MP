@@ -94,3 +94,9 @@
 - The client now reaches player identification, but a validly signed legacy certificate chain was not marked Xbox-authenticated. The current verifier only recognized Mojang's newer root key; the historical 1.19 implementation also trusted the original root, removed later in commit `5386e8607977583767a62d8f4eba2011f9a050ea`.
 - Reintroduced the original root key for 1.19 profiles only. JWT signature verification and authenticated-XUID checks remain enabled, and modern profiles continue using their prior key policy.
 - Repeat 1.19.10 client login to verify whether the client's certificate was signed by that root. Do not disable `xbox-auth` as a substitute for this check.
+
+## 2026-09-21 — Xbox chain diagnosis after repeat failure
+
+- Repeated real-client login still ended in `Not authenticated` with the old root alone. For 1.19 profiles, the verifier now accepts either historically valid Mojang root, while still checking each JWT signature. Modern versions retain their prior trust policy.
+- When a required-auth legacy chain contains no trusted root, the disconnect reason now includes only a count and short SHA-256 prefixes of the public signing keys. No JWT, private key, XUID, or other login data is logged. This diagnostic distinguishes an unsupported root from a self-signed-only legacy client chain.
+- Do not infer from the client's signed-in UI state that its 1.19.10 network login still carries an Xbox-certified chain. Wait for the diagnostic from a fresh client attempt.

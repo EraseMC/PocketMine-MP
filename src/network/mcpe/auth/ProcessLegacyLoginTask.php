@@ -29,8 +29,13 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\utils\AssumptionFailedError;
 use function base64_decode;
+use function count;
+use function hash;
 use function igbinary_serialize;
 use function igbinary_unserialize;
+use function implode;
+use function in_array;
+use function substr;
 
 class ProcessLegacyLoginTask extends AsyncTask{
 	private const TLS_KEY_ON_COMPLETION = "completion";
@@ -57,15 +62,18 @@ class ProcessLegacyLoginTask extends AsyncTask{
 	/** Whether the player has a certificate chain link signed by the given root public key. */
 	private bool $authenticated = false;
 	private ?string $clientPublicKeyDer = null;
+	/** @var string[] */
+	private array $signerFingerprints = [];
 
 	/**
 	 * @param string[] $chainJwts
+	 * @param string[]|null $rootAuthKeysDer
 	 * @phpstan-param \Closure(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPublicKey) : void $onCompletion
 	 */
 	public function __construct(
 		array $chainJwts,
 		private string $clientDataJwt,
-		private ?string $rootAuthKeyDer,
+		private ?array $rootAuthKeysDer,
 		private bool $authRequired,
 		\Closure $onCompletion
 	){
@@ -77,7 +85,9 @@ class ProcessLegacyLoginTask extends AsyncTask{
 		try{
 			$this->clientPublicKeyDer = $this->validateChain();
 			AuthJwtHelper::validateSelfSignedToken($this->clientDataJwt, $this->clientPublicKeyDer);
-			$this->error = null;
+			$this->error = !$this->authenticated && $this->authRequired
+				? "No trusted Xbox root in legacy chain (" . count($this->signerFingerprints) . " signer keys; SHA-256 prefixes: " . implode(",", $this->signerFingerprints) . ")"
+				: null;
 		}catch(VerifyLoginException $e){
 			$disconnectMessage = $e->getDisconnectMessage();
 			$this->error = $disconnectMessage instanceof Translatable ? new NonThreadSafeValue($disconnectMessage) : $disconnectMessage;
@@ -92,8 +102,11 @@ class ProcessLegacyLoginTask extends AsyncTask{
 
 		foreach($chain as $jwt){
 			$claims = AuthJwtHelper::validateLegacyAuthToken($jwt, $identityPublicKeyDer);
-			if($this->rootAuthKeyDer !== null && $identityPublicKeyDer === $this->rootAuthKeyDer){
-				$this->authenticated = true; //we're signed into xbox live, according to this root key
+			if($identityPublicKeyDer !== null){
+				$this->signerFingerprints[] = substr(hash('sha256', $identityPublicKeyDer), 0, 16);
+				if($this->rootAuthKeysDer !== null && in_array($identityPublicKeyDer, $this->rootAuthKeysDer, true)){
+					$this->authenticated = true; //signed by a trusted Xbox Live root
+				}
 			}
 			if(!isset($claims->identityPublicKey)){
 				throw new VerifyLoginException("Missing identityPublicKey in chain link", KnownTranslationFactory::pocketmine_disconnect_invalidSession_missingKey());
