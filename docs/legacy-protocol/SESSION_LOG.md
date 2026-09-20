@@ -45,3 +45,8 @@
 - Added a bounded first-batch parser: one raw `RequestNetworkSettingsPacket` or one compressed `LoginPacket`. The selected compression state is retained for the session, and legacy login is forwarded to the regular login handler after a supported profile is selected.
 - Added unit tests for the two first-batch forms, invalid raw/multiple packets, and the RakNet acceptor. These tests have not been executed locally because PHP and extensions are unavailable. The transport flow still requires CI and real-client verification before enabling any legacy profile.
 - An unrelated working-tree change in `src/VersionInfo.php` appeared while this milestone was being implemented. It was left untouched and excluded from this work.
+
+## 2026-09-20 — 1.19.62 profile refinement
+
+- After parsing client data, a login with protocol 567 and exact `GameVersion` `1.19.62` switches the session to profile 568 before skin conversion. This follows the historical 1.19.62 wire exception corroborated by Nukkit-MOT; a normal 1.19.60 login remains on 567.
+- A boundary unit test is present, but it has not been run; a real 1.19.62 client is also required before this exception can be considered verified.

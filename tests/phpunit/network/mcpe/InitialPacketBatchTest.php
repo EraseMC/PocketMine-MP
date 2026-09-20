@@ -63,4 +63,10 @@ final class InitialPacketBatchTest extends TestCase{
 		self::assertTrue($acceptor->accepts(11));
 		self::assertFalse($acceptor->accepts(9));
 	}
+
+	public function testOnly1_19_62RefinesProtocol567To568() : void{
+		self::assertSame(ProtocolInfo::PROTOCOL_1_19_63, LegacyClientProfile::select(ProtocolInfo::PROTOCOL_1_19_60, '1.19.62'));
+		self::assertSame(ProtocolInfo::PROTOCOL_1_19_60, LegacyClientProfile::select(ProtocolInfo::PROTOCOL_1_19_60, '1.19.60'));
+		self::assertSame(ProtocolInfo::PROTOCOL_1_19_63, LegacyClientProfile::select(ProtocolInfo::PROTOCOL_1_19_63, '1.19.63'));
+	}
 }

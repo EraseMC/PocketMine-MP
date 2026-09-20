@@ -32,6 +32,7 @@ use pocketmine\network\mcpe\auth\ProcessOpenIdLoginTask;
 use pocketmine\network\mcpe\auth\ProcessSelfSignedLoginTask;
 use pocketmine\network\mcpe\JwtException;
 use pocketmine\network\mcpe\JwtUtils;
+use pocketmine\network\mcpe\LegacyClientProfile;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
@@ -240,6 +241,11 @@ class LoginPacketHandler extends PacketHandler{
 			$this->session->disconnectWithError(KnownTranslationFactory::disconnectionScreen_invalidName());
 
 			return null;
+		}
+
+		$profileId = LegacyClientProfile::select($this->session->getProtocolId(), $clientData->GameVersion);
+		if($profileId !== $this->session->getProtocolId()){
+			$this->session->setProtocolId($profileId);
 		}
 
 		if($this->session->getProtocolId() === ProtocolInfo::PROTOCOL_1_26_44){
