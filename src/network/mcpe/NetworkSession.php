@@ -65,6 +65,7 @@ use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundCloseFormPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
+use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\ModalFormRequestPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 use pocketmine\network\mcpe\protocol\NetworkChunkPublisherUpdatePacket;
@@ -236,7 +237,8 @@ class NetworkSession{
 
 		$this->setHandler(new SessionStartPacketHandler(
 			$this,
-			$this->onSessionStartSuccess(...)
+			$this->onSessionStartSuccess(...),
+			$this->onLegacySessionStartSuccess(...)
 		));
 
 		$this->manager->add($this);
@@ -255,7 +257,18 @@ class NetworkSession{
 		$this->logger->debug("Session start handshake completed, awaiting login packet");
 		$this->flushGamePacketQueue();
 		$this->enableCompression = true;
-		$this->setHandler(new LoginPacketHandler(
+		$this->setHandler($this->createLoginHandler());
+	}
+
+	private function onLegacySessionStartSuccess(LoginPacket $packet) : void{
+		$this->logger->debug("Legacy compressed login received");
+		$handler = $this->createLoginHandler();
+		$this->setHandler($handler);
+		$handler->handleLogin($packet);
+	}
+
+	private function createLoginHandler() : LoginPacketHandler{
+		return new LoginPacketHandler(
 			$this->server,
 			$this,
 			function(PlayerInfo $info) : void{
@@ -265,7 +278,7 @@ class NetworkSession{
 				$this->manager->markLoginReceived($this);
 			},
 			$this->setAuthenticationStatus(...)
-		));
+		);
 	}
 
 	protected function createPlayer() : void{
@@ -433,7 +446,12 @@ class NetworkSession{
 				throw new PacketHandlingException("No bytes in payload");
 			}
 
-			if($this->enableCompression){
+			if($this->protocolId === null && !$this->enableCompression){
+				[$decompressed, $legacyCompression] = InitialPacketBatch::decode($payload, $this->compressor, $this->packetPool);
+				if($legacyCompression){
+					$this->enableCompression = true;
+				}
+			}elseif($this->enableCompression){
 				if($this->protocolId >= ProtocolInfo::PROTOCOL_1_20_60){
 					$compressionType = ord($payload[0]);
 					$compressed = substr($payload, 1);

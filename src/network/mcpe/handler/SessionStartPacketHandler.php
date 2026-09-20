@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
+use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\NetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
@@ -33,15 +35,17 @@ final class SessionStartPacketHandler extends PacketHandler{
 
 	/**
 	 * @phpstan-param \Closure() : void $onSuccess
+	 * @phpstan-param \Closure(LoginPacket) : void $onLegacySuccess
 	 */
 	public function __construct(
 		private NetworkSession $session,
-		private \Closure $onSuccess
+		private \Closure $onSuccess,
+		private \Closure $onLegacySuccess
 	){}
 
 	public function handleRequestNetworkSettings(RequestNetworkSettingsPacket $packet) : bool{
 		$protocolVersion = $packet->getProtocolVersion();
-		if(!$this->isCompatibleProtocol($protocolVersion)){
+		if($protocolVersion < ProtocolInfo::PROTOCOL_1_19_30 || !$this->isCompatibleProtocol($protocolVersion)){
 			$this->session->disconnectIncompatibleProtocol($protocolVersion);
 
 			return true;
@@ -58,6 +62,20 @@ final class SessionStartPacketHandler extends PacketHandler{
 		));
 		($this->onSuccess)();
 
+		return true;
+	}
+
+	public function handleLogin(LoginPacket $packet) : bool{
+		$protocolVersion = $packet->protocol;
+		if($protocolVersion >= ProtocolInfo::PROTOCOL_1_19_30 || !$this->isCompatibleProtocol($protocolVersion)){
+			//The first batch has already selected legacy compression. There is no
+			//negotiated serializer for an unsupported profile, so close without
+			//attempting a version-dependent PlayStatus packet.
+			$this->session->disconnect(KnownTranslationFactory::pocketmine_disconnect_incompatibleProtocol((string) $protocolVersion), notify: false);
+			return true;
+		}
+		$this->session->setProtocolId($protocolVersion);
+		($this->onLegacySuccess)($packet);
 		return true;
 	}
 

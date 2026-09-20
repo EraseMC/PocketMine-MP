@@ -38,3 +38,10 @@
 - The server's Composer manifest and lockfile now point at the two feature branches and pin `BedrockData` to `349adc3f1cdf5b43152862e094164c189bbc6752` and `BedrockProtocol` to `c404b35685f7bf07297c2b8440b6bb7b1960450c`. Composer install has not run locally.
 - PHP, Composer, Docker, and a WSL distribution are unavailable in this workspace. Codec tests and code generation therefore still need a PHP environment or CI; only Git whitespace checks and source object-hash checks have run locally.
 - Transport bootstrap, gameplay packet completeness, and actual client joins remain open; no 1.19 profile is enabled in `ACCEPTED_PROTOCOL`.
+
+## 2026-09-20 — transport bootstrap implementation
+
+- Added a RakLib `ProtocolAcceptor` adapter accepting transport versions 10 and 11 with 11 primary, matching the dependency's current two-method interface.
+- Added a bounded first-batch parser: one raw `RequestNetworkSettingsPacket` or one compressed `LoginPacket`. The selected compression state is retained for the session, and legacy login is forwarded to the regular login handler after a supported profile is selected.
+- Added unit tests for the two first-batch forms, invalid raw/multiple packets, and the RakNet acceptor. These tests have not been executed locally because PHP and extensions are unavailable. The transport flow still requires CI and real-client verification before enabling any legacy profile.
+- An unrelated working-tree change in `src/VersionInfo.php` appeared while this milestone was being implemented. It was left untouched and excluded from this work.
