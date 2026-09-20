@@ -116,10 +116,11 @@ final class AuthJwtHelper{
 
 	/**
 	 * @deprecated
+	 * @return array{LegacyAuthJwtBody, string} The claims and verified signing key DER.
 	 * @throws VerifyLoginException if errors are encountered
 	 */
-	public static function validateLegacyAuthToken(string $jwt, ?string $expectedKeyDer) : LegacyAuthJwtBody{
-		self::validateSelfSignedToken($jwt, $expectedKeyDer);
+	public static function validateLegacyAuthToken(string $jwt, ?string $expectedKeyDer) : array{
+		$signerKeyDer = self::validateSelfSignedToken($jwt, $expectedKeyDer);
 
 		//TODO: this parses the JWT twice and throws away a bunch of parts, optimize this
 		[, $claimsArray, ] = JwtUtils::parse($jwt);
@@ -139,13 +140,13 @@ final class AuthJwtHelper{
 
 		self::checkExpiry($claims);
 
-		return $claims;
+		return [$claims, $signerKeyDer];
 	}
 
 	/**
-	 * Used for validating the info in clientDataJwt
+	 * Used for validating clientDataJwt. Returns the DER public key which verified this JWT's signature.
 	 */
-	public static function validateSelfSignedToken(string $jwt, ?string $expectedKeyDer) : void{
+	public static function validateSelfSignedToken(string $jwt, ?string $expectedKeyDer) : string{
 		try{
 			[$headersArray, ] = JwtUtils::parse($jwt);
 		}catch(JwtException $e){
@@ -181,5 +182,6 @@ final class AuthJwtHelper{
 		}catch(JwtException $e){
 			throw new VerifyLoginException($e->getMessage(), null, 0, $e);
 		}
+		return $headerDerKey;
 	}
 }

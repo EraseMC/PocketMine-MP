@@ -103,12 +103,10 @@ class ProcessLegacyLoginTask extends AsyncTask{
 		$identityPublicKeyDer = null;
 
 		foreach($chain as $jwt){
-			$claims = AuthJwtHelper::validateLegacyAuthToken($jwt, $identityPublicKeyDer);
-			if($identityPublicKeyDer !== null){
-				$this->signerFingerprints .= ($this->signerKeyCount++ === 0 ? "" : ",") . substr(hash('sha256', $identityPublicKeyDer), 0, 16);
-				if($rootAuthKeysDer !== null && in_array($identityPublicKeyDer, $rootAuthKeysDer, true)){
-					$this->authenticated = true; //signed by a trusted Xbox Live root
-				}
+			[$claims, $signerKeyDer] = AuthJwtHelper::validateLegacyAuthToken($jwt, $identityPublicKeyDer);
+			$this->signerFingerprints .= ($this->signerKeyCount++ === 0 ? "" : ",") . substr(hash('sha256', $signerKeyDer), 0, 16);
+			if($rootAuthKeysDer !== null && in_array($signerKeyDer, $rootAuthKeysDer, true)){
+				$this->authenticated = true; //this JWT's signature was verified using a trusted Xbox Live root
 			}
 			if(!isset($claims->identityPublicKey)){
 				throw new VerifyLoginException("Missing identityPublicKey in chain link", KnownTranslationFactory::pocketmine_disconnect_invalidSession_missingKey());
