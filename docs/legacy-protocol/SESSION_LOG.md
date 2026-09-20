@@ -82,3 +82,9 @@
 - The client reached the session from `127.0.0.1`, proving loopback transport and discovery worked after the user's local Windows loopback exemption.
 - First packet caused a PHP `ParseError` in `BedrockProtocol/src/serializer/CommonTypes.php:640`: a method call on an unparenthesized `new` expression. Corrected to `(new IntIdMetaItemDescriptor(0, 0))->write(...)` in protocol commit `0b65303bd202cdbf9f9aa8dd387c3975839c7bb2`.
 - PHP 8.2 lint checked all 661 PHP files in `BedrockProtocol/src`, `tests`, and `tools`: zero syntax errors after the fix. This does not yet prove successful login or gameplay; repeat client test needed.
+
+## 2026-09-21 — 1.19.10 client data shape
+
+- A real 1.19.10 client now reaches `LoginPacketHandler`, but JSON mapping rejected missing `CompatibleWithClientSideChunkGen` before authentication. The historical 1.19 model marks that field as introduced in 1.19.80 and `TrustedSkin` in 1.19.20.
+- `ClientData` now defaults both absent fields to false instead of requiring them from older clients. Modern required fields remain checked by the mapper. Protocol commit `a6a1cd684838e171d58424b14bfb639bece68332`.
+- Retest required; this only addresses this specific client-data parsing failure.
