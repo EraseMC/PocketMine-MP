@@ -76,3 +76,9 @@
 - A dedicated data directory outside the Git repos is used for the test server. The server boots on UDP 19132; development builds are enabled only in this local directory.
 - `ERASEMC_TEST_1_19_10=1` opt-in admits protocol 534 through the legacy login handler and advertises 1.19.10/534 in RakNet discovery for manual client testing. `ACCEPTED_PROTOCOL` remains unchanged. This is an experimental test gate, not a declaration of full support.
 - Real-client login, world join, and gameplay still require observation. The unrelated user edit in `src/VersionInfo.php` remains untouched.
+
+## 2026-09-21 — first real 1.19.10 login crash
+
+- The client reached the session from `127.0.0.1`, proving loopback transport and discovery worked after the user's local Windows loopback exemption.
+- First packet caused a PHP `ParseError` in `BedrockProtocol/src/serializer/CommonTypes.php:640`: a method call on an unparenthesized `new` expression. Corrected to `(new IntIdMetaItemDescriptor(0, 0))->write(...)` in protocol commit `0b65303bd202cdbf9f9aa8dd387c3975839c7bb2`.
+- PHP 8.2 lint checked all 661 PHP files in `BedrockProtocol/src`, `tests`, and `tools`: zero syntax errors after the fix. This does not yet prove successful login or gameplay; repeat client test needed.

@@ -250,12 +250,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockProtocol.git",
-                "reference": "54d70e593422289fb981da2e2f73eb1f87f36ac1"
+                "reference": "0b65303bd202cdbf9f9aa8dd387c3975839c7bb2"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/54d70e593422289fb981da2e2f73eb1f87f36ac1",
-                "reference": "54d70e593422289fb981da2e2f73eb1f87f36ac1",
+                "reference": "0b65303bd202cdbf9f9aa8dd387c3975839c7bb2",
                 "shasum": ""
             },
             "require": {
