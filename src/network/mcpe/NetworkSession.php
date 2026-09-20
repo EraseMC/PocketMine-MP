@@ -26,6 +26,7 @@ namespace pocketmine\network\mcpe;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\DataDecodeException;
+use pocketmine\block\tile\Spawnable;
 use pocketmine\entity\effect\EffectInstance;
 use pocketmine\event\player\PlayerDuplicateLoginEvent;
 use pocketmine\event\player\PlayerResourcePackOfferEvent;
@@ -61,6 +62,7 @@ use pocketmine\network\mcpe\handler\ResourcePacksPacketHandler;
 use pocketmine\network\mcpe\handler\SessionStartPacketHandler;
 use pocketmine\network\mcpe\handler\SpawnResponsePacketHandler;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
+use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundCloseFormPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
@@ -1319,11 +1321,19 @@ class NetworkSession{
 	/**
 	 * @phpstan-param \Closure() : void $onCompletion
 	 */
-	private function sendChunkPacket(string $chunkPacket, \Closure $onCompletion, World $world) : void{
+	private function sendChunkPacket(string $chunkPacket, \Closure $onCompletion, World $world, int $chunkX, int $chunkZ) : void{
 		$world->timings->syncChunkSend->startTiming();
 		try{
 			$this->queueCompressed($chunkPacket);
 			$onCompletion();
+			if($this->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_10 && ($chunk = $world->getChunk($chunkX, $chunkZ)) !== null){
+				//The chunk creates the tiles with minimal NBT; these packets populate their contents.
+				foreach($chunk->getTiles() as $tile){
+					if($tile instanceof Spawnable){
+						$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound($this->getTypeConverter())));
+					}
+				}
+			}
 		}finally{
 			$world->timings->syncChunkSend->stopTiming();
 		}
@@ -1338,7 +1348,7 @@ class NetworkSession{
 		$world = $this->player->getLocation()->getWorld();
 		$promiseOrPacket = ChunkCache::getInstance($world, $this->compressor)->request($chunkX, $chunkZ, $this->getTypeConverter());
 		if(is_string($promiseOrPacket)){
-			$this->sendChunkPacket($promiseOrPacket, $onCompletion, $world);
+			$this->sendChunkPacket($promiseOrPacket, $onCompletion, $world, $chunkX, $chunkZ);
 			return;
 		}
 		$promiseOrPacket->onResolve(
@@ -1359,7 +1369,7 @@ class NetworkSession{
 					//to NEEDED if they want to be resent.
 					return;
 				}
-				$this->sendChunkPacket($promise->getResult(), $onCompletion, $world);
+				$this->sendChunkPacket($promise->getResult(), $onCompletion, $world, $chunkX, $chunkZ);
 			}
 		);
 	}

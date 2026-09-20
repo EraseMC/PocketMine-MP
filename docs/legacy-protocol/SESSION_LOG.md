@@ -63,3 +63,9 @@
 - Updated generated BedrockData path constants for all 27 restored assets; the data provenance note was moved into `README.md`, which the path generator already excludes.
 - PHP code generation and tests remain unexecuted locally; the generated constant list must be checked against the generator in CI or a PHP environment.
 - A read-only source-versus-generated check confirms all 158 top-level BedrockData entries have constants in generator order, with no missing or extra paths. The server lockfile now pins `BedrockData` commit `bd3add47ef73114bbd03b89fcea7e34b6dd94696`.
+
+## 2026-09-20 — 1.19.10 chunk tile workaround
+
+- Restored the historical 1.19.10 tile workaround: chunk NBT contains only tile ID and coordinates, then full `BlockActorDataPacket` updates follow the chunk. Both cached and asynchronous chunk-send paths use the same helper.
+- This is based on the pre-removal PocketMine implementation (`af8464adeb5ecf3288b97cc3c25889ea09e70ca7^`). It still requires a real 1.19.10 client test, especially item frames and lecterns.
+- The subchunk-version question remains open: current serializer emits v8; Nukkit indicates v9 from 1.19.80, but this should not be changed without confirming the exact network-chunk payload and client behaviour.

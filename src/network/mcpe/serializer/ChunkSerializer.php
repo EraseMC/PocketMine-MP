@@ -27,17 +27,22 @@ use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\VarInt;
 use pocketmine\block\tile\Spawnable;
+use pocketmine\block\tile\Tile;
+use pocketmine\block\tile\TileFactory;
 use pocketmine\data\bedrock\BiomeIds;
 use pocketmine\data\bedrock\LegacyBiomeIdToStringIdMap;
+use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
 use function count;
+use function get_class;
 
 final class ChunkSerializer{
 	private function __construct(){
@@ -203,9 +208,20 @@ final class ChunkSerializer{
 
 	public static function serializeTiles(Chunk $chunk, TypeConverter $typeConverter) : string{
 		$stream = new ByteBufferWriter();
+		$nbtSerializer = new NetworkNbtSerializer();
 		foreach($chunk->getTiles() as $tile){
 			if($tile instanceof Spawnable){
-				$stream->writeByteArray($tile->getSerializedSpawnCompound($typeConverter)->getEncodedNbt());
+				if($typeConverter->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_10){
+					//1.19.10 fails to load tile contents from a chunk. Create the tile here, then send its full data separately.
+					$nbt = CompoundTag::create()
+						->setString(Tile::TAG_ID, TileFactory::getInstance()->getSaveId(get_class($tile)))
+						->setInt(Tile::TAG_X, $tile->getPosition()->getFloorX())
+						->setInt(Tile::TAG_Y, $tile->getPosition()->getFloorY())
+						->setInt(Tile::TAG_Z, $tile->getPosition()->getFloorZ());
+					$stream->writeByteArray($nbtSerializer->write(new TreeRoot($nbt)));
+				}else{
+					$stream->writeByteArray($tile->getSerializedSpawnCompound($typeConverter)->getEncodedNbt());
+				}
 			}
 		}
 
