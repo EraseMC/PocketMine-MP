@@ -27,5 +27,14 @@
 ### Not yet verified
 
 - No real 1.19 client join has been performed in this branch.
-- No binary BedrockData asset has been restored to the working tree.
 - No 1.19 protocol is advertised as supported yet.
+
+## 2026-09-20 — packet, inventory, and historical data milestone
+
+- Reintroduced the 1.19.0 `AdventureSettingsPacket` and its `AddPlayerPacket` payload variant. The packet is registered in the generator's legacy packet list so regeneration retains it.
+- Added older recipe ingredient, smithing, skin, attribute, item request, and container-ID wire layouts in `BedrockProtocol`, with byte fixtures for the 1.19.30 and 1.19.50 boundaries.
+- Restored 27 immutable 1.19 files in `BedrockData` from tree `285cdbb07a8fb188972e9564bf2b9ece11670452^`; each working-tree file was compared against its source Git object ID. These are six canonical block-state palettes, six block-state meta maps, six item lists, six block-to-item maps, and three R12 block maps.
+- Reconnected block palette, item list, and item schema selection for the 11 stable 1.19 protocol IDs in `PocketMine-MP` using the exact mappings preserved immediately before the 2023 removal commit.
+- The server's Composer manifest and lockfile now point at the two feature branches and pin `BedrockData` to `349adc3f1cdf5b43152862e094164c189bbc6752` and `BedrockProtocol` to `c404b35685f7bf07297c2b8440b6bb7b1960450c`. Composer install has not run locally.
+- PHP, Composer, Docker, and a WSL distribution are unavailable in this workspace. Codec tests and code generation therefore still need a PHP environment or CI; only Git whitespace checks and source object-hash checks have run locally.
+- Transport bootstrap, gameplay packet completeness, and actual client joins remain open; no 1.19 profile is enabled in `ACCEPTED_PROTOCOL`.

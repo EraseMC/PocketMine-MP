@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58558366f4d31a9f0825d226e8c47a4e",
+    "content-hash": "3c7d42c482978281ddc1b15091e138a3",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -221,19 +221,18 @@
         },
         {
             "name": "erasemc/bedrock-data",
-            "version": "dev-master",
+            "version": "dev-feature/legacy-1.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockData.git",
-                "reference": "8061304f23c1cc32c07e6d1a61043f020437d401"
+                "reference": "349adc3f1cdf5b43152862e094164c189bbc6752"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockData/zipball/8061304f23c1cc32c07e6d1a61043f020437d401",
-                "reference": "8061304f23c1cc32c07e6d1a61043f020437d401",
+                "url": "https://api.github.com/repos/EraseMC/BedrockData/zipball/349adc3f1cdf5b43152862e094164c189bbc6752",
+                "reference": "349adc3f1cdf5b43152862e094164c189bbc6752",
                 "shasum": ""
             },
-            "default-branch": true,
             "type": "library",
             "license": [
                 "CC0-1.0"
@@ -241,22 +240,22 @@
             "description": "EraseMC's data generated from Minecraft: Bedrock Edition",
             "support": {
                 "issues": "https://github.com/EraseMC/BedrockData/issues",
-                "source": "https://github.com/EraseMC/BedrockData/tree/master"
+                "source": "https://github.com/EraseMC/BedrockData/tree/feature/legacy-1.19"
             },
-            "time": "2026-09-18T01:25:16+00:00"
+            "time": "2026-09-20T17:35:24+03:00"
         },
         {
             "name": "erasemc/bedrock-protocol",
-            "version": "dev-master",
+            "version": "dev-feature/legacy-1.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockProtocol.git",
-                "reference": "a6287e271f96890cabff432643c00e4bc532097b"
+                "reference": "c404b35685f7bf07297c2b8440b6bb7b1960450c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/a6287e271f96890cabff432643c00e4bc532097b",
-                "reference": "a6287e271f96890cabff432643c00e4bc532097b",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/c404b35685f7bf07297c2b8440b6bb7b1960450c",
+                "reference": "c404b35685f7bf07297c2b8440b6bb7b1960450c",
                 "shasum": ""
             },
             "require": {
@@ -275,7 +274,6 @@
                 "phpstan/phpstan-strict-rules": "^2.0.0",
                 "phpunit/phpunit": "^9.5 || ^10.0 || ^11.0"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -298,9 +296,9 @@
             "description": "EraseMC's implementation of the Minecraft: Bedrock Edition protocol in PHP",
             "support": {
                 "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
-                "source": "https://github.com/EraseMC/BedrockProtocol/tree/master"
+                "source": "https://github.com/EraseMC/BedrockProtocol/tree/feature/legacy-1.19"
             },
-            "time": "2026-09-18T00:52:17+00:00"
+            "time": "2026-09-20T17:35:42+03:00"
         },
         {
             "name": "netresearch/jsonmapper",
