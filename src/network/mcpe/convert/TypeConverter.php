@@ -94,7 +94,7 @@ class TypeConverter{
 		$this->__protocolConstruct($protocolId);
 
 		//TODO: inject stuff via constructor
-		$this->blockItemIdMap = BlockItemIdMap::getInstance();
+		$this->blockItemIdMap = BlockItemIdMapFromDataHelper::loadFromProtocolId($protocolId);
 
 		$this->blockTranslator = BlockTranslator::loadFromProtocolId($protocolId);
 
@@ -201,7 +201,13 @@ class TypeConverter{
 			return new TagWildcardRecipeIngredient($descriptor->getTag());
 		}
 
-		if($descriptor instanceof StringIdMetaItemDescriptor){
+		if($descriptor instanceof IntIdMetaItemDescriptor){
+			if($descriptor->getId() === 0){
+				return null; //legacy empty recipe ingredient
+			}
+			$stringId = $this->itemTypeDictionary->fromIntId($descriptor->getId());
+			$meta = $descriptor->getMeta();
+		}elseif($descriptor instanceof StringIdMetaItemDescriptor){
 			$stringId = $descriptor->getId();
 			$meta = $descriptor->getMeta();
 		}else{

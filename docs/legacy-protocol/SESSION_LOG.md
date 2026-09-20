@@ -50,3 +50,16 @@
 
 - After parsing client data, a login with protocol 567 and exact `GameVersion` `1.19.62` switches the session to profile 568 before skin conversion. This follows the historical 1.19.62 wire exception corroborated by Nukkit-MOT; a normal 1.19.60 login remains on 567.
 - A boundary unit test is present, but it has not been run; a real 1.19.62 client is also required before this exception can be considered verified.
+
+## 2026-09-20 — entity flag conversion
+
+- Added the pre-1.19.50 `CAN_DASH` gap conversion at the shared entity-metadata serializer. The conversion preserves `CAN_POWER_JUMP`, shifts later flags, and carries bit 63 between the two flag longs. A boundary test covers this case.
+- Updated the server lockfile to `BedrockProtocol` commit `54d70e593422289fb981da2e2f73eb1f87f36ac1`. PHP tests still need to run before any legacy profile is enabled.
+- Restored numeric-ID recipe ingredient conversion in `TypeConverter`, including the legacy ID-0 empty ingredient, so recipes decoded by the 1.19 codec can reach the core crafting model.
+
+## 2026-09-20 — versioned block-item aliases and generated paths
+
+- `TypeConverter` now loads the historical block-item alias table for each 1.19 profile instead of applying the current disk-format singleton to old network item IDs. A regression test checks the old `minecraft:item.acacia_door` alias against the current map.
+- Updated generated BedrockData path constants for all 27 restored assets; the data provenance note was moved into `README.md`, which the path generator already excludes.
+- PHP code generation and tests remain unexecuted locally; the generated constant list must be checked against the generator in CI or a PHP environment.
+- A read-only source-versus-generated check confirms all 158 top-level BedrockData entries have constants in generator order, with no missing or extra paths. The server lockfile now pins `BedrockData` commit `bd3add47ef73114bbd03b89fcea7e34b6dd94696`.
