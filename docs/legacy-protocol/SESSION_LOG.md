@@ -69,3 +69,10 @@
 - Restored the historical 1.19.10 tile workaround: chunk NBT contains only tile ID and coordinates, then full `BlockActorDataPacket` updates follow the chunk. Both cached and asynchronous chunk-send paths use the same helper.
 - This is based on the pre-removal PocketMine implementation (`af8464adeb5ecf3288b97cc3c25889ea09e70ca7^`). It still requires a real 1.19.10 client test, especially item frames and lecterns.
 - The subchunk-version question remains open: current serializer emits v8; Nukkit indicates v9 from 1.19.80, but this should not be changed without confirming the exact network-chunk payload and client behaviour.
+
+## 2026-09-21 — local 1.19.10 client trial
+
+- Found a compatible PHP 8.2 runtime with required extensions and installed the exact locked Composer dependencies. This enables actual server boot and PHP lint in this workspace.
+- A dedicated data directory outside the Git repos is used for the test server. The server boots on UDP 19132; development builds are enabled only in this local directory.
+- `ERASEMC_TEST_1_19_10=1` opt-in admits protocol 534 through the legacy login handler and advertises 1.19.10/534 in RakNet discovery for manual client testing. `ACCEPTED_PROTOCOL` remains unchanged. This is an experimental test gate, not a declaration of full support.
+- Real-client login, world join, and gameplay still require observation. The unrelated user edit in `src/VersionInfo.php` remains untouched.

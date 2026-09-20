@@ -53,6 +53,7 @@ use raklib\utils\InternetAddress;
 use function addcslashes;
 use function base64_encode;
 use function implode;
+use function getenv;
 use function mt_rand;
 use function rtrim;
 use function substr;
@@ -262,13 +263,14 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 
 	public function setName(string $name) : void{
 		$info = $this->server->getQueryInformation();
+		$test11910 = getenv('ERASEMC_TEST_1_19_10') === '1';
 
 		$this->interface->setName(implode(";",
 			[
 				"MCPE",
 				rtrim(addcslashes($name, ";"), '\\'),
-				ProtocolInfo::CURRENT_PROTOCOL,
-				ProtocolInfo::MINECRAFT_VERSION_NETWORK,
+				$test11910 ? ProtocolInfo::PROTOCOL_1_19_10 : ProtocolInfo::CURRENT_PROTOCOL,
+				$test11910 ? '1.19.10' : ProtocolInfo::MINECRAFT_VERSION_NETWORK,
 				$info->getPlayerCount(),
 				$info->getMaxPlayerCount(),
 				$this->rakServerId,

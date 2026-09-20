@@ -30,6 +30,7 @@ use pocketmine\network\mcpe\protocol\NetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
 use function in_array;
+use function getenv;
 
 final class SessionStartPacketHandler extends PacketHandler{
 
@@ -80,6 +81,7 @@ final class SessionStartPacketHandler extends PacketHandler{
 	}
 
 	protected function isCompatibleProtocol(int $protocolVersion) : bool{
-		return in_array($protocolVersion, ProtocolInfo::ACCEPTED_PROTOCOL, true);
+		return in_array($protocolVersion, ProtocolInfo::ACCEPTED_PROTOCOL, true)
+			|| ($protocolVersion === ProtocolInfo::PROTOCOL_1_19_10 && getenv('ERASEMC_TEST_1_19_10') === '1');
 	}
 }
