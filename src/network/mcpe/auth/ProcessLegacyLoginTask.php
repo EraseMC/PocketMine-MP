@@ -29,11 +29,9 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\utils\AssumptionFailedError;
 use function base64_decode;
-use function count;
 use function hash;
 use function igbinary_serialize;
 use function igbinary_unserialize;
-use function implode;
 use function in_array;
 use function substr;
 
@@ -62,8 +60,9 @@ class ProcessLegacyLoginTask extends AsyncTask{
 	/** Whether the player has a certificate chain link signed by the given root public key. */
 	private bool $authenticated = false;
 	private ?string $clientPublicKeyDer = null;
-	/** @var string[] */
-	private array $signerFingerprints = [];
+	private string $signerFingerprints = "";
+	private int $signerKeyCount = 0;
+	private ?string $rootAuthKeys;
 
 	/**
 	 * @param string[] $chainJwts
@@ -73,12 +72,13 @@ class ProcessLegacyLoginTask extends AsyncTask{
 	public function __construct(
 		array $chainJwts,
 		private string $clientDataJwt,
-		private ?array $rootAuthKeysDer,
+		?array $rootAuthKeysDer,
 		private bool $authRequired,
 		\Closure $onCompletion
 	){
 		$this->storeLocal(self::TLS_KEY_ON_COMPLETION, $onCompletion);
 		$this->chain = igbinary_serialize($chainJwts) ?? throw new AssumptionFailedError("This should never fail");
+		$this->rootAuthKeys = $rootAuthKeysDer === null ? null : (igbinary_serialize($rootAuthKeysDer) ?? throw new AssumptionFailedError("This should never fail"));
 	}
 
 	public function onRun() : void{
@@ -86,7 +86,7 @@ class ProcessLegacyLoginTask extends AsyncTask{
 			$this->clientPublicKeyDer = $this->validateChain();
 			AuthJwtHelper::validateSelfSignedToken($this->clientDataJwt, $this->clientPublicKeyDer);
 			$this->error = !$this->authenticated && $this->authRequired
-				? "No trusted Xbox root in legacy chain (" . count($this->signerFingerprints) . " signer keys; SHA-256 prefixes: " . implode(",", $this->signerFingerprints) . ")"
+				? "No trusted Xbox root in legacy chain (" . $this->signerKeyCount . " signer keys; SHA-256 prefixes: " . $this->signerFingerprints . ")"
 				: null;
 		}catch(VerifyLoginException $e){
 			$disconnectMessage = $e->getDisconnectMessage();
@@ -97,14 +97,16 @@ class ProcessLegacyLoginTask extends AsyncTask{
 	private function validateChain() : string{
 		/** @var string[] $chain */
 		$chain = igbinary_unserialize($this->chain);
+		/** @var string[]|null $rootAuthKeysDer */
+		$rootAuthKeysDer = $this->rootAuthKeys === null ? null : igbinary_unserialize($this->rootAuthKeys);
 
 		$identityPublicKeyDer = null;
 
 		foreach($chain as $jwt){
 			$claims = AuthJwtHelper::validateLegacyAuthToken($jwt, $identityPublicKeyDer);
 			if($identityPublicKeyDer !== null){
-				$this->signerFingerprints[] = substr(hash('sha256', $identityPublicKeyDer), 0, 16);
-				if($this->rootAuthKeysDer !== null && in_array($identityPublicKeyDer, $this->rootAuthKeysDer, true)){
+				$this->signerFingerprints .= ($this->signerKeyCount++ === 0 ? "" : ",") . substr(hash('sha256', $identityPublicKeyDer), 0, 16);
+				if($rootAuthKeysDer !== null && in_array($identityPublicKeyDer, $rootAuthKeysDer, true)){
 					$this->authenticated = true; //signed by a trusted Xbox Live root
 				}
 			}

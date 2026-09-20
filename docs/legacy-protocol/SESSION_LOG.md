@@ -100,3 +100,9 @@
 - Repeated real-client login still ended in `Not authenticated` with the old root alone. For 1.19 profiles, the verifier now accepts either historically valid Mojang root, while still checking each JWT signature. Modern versions retain their prior trust policy.
 - When a required-auth legacy chain contains no trusted root, the disconnect reason now includes only a count and short SHA-256 prefixes of the public signing keys. No JWT, private key, XUID, or other login data is logged. This diagnostic distinguishes an unsupported root from a self-signed-only legacy client chain.
 - Do not infer from the client's signed-in UI state that its 1.19.10 network login still carries an Xbox-certified chain. Wait for the diagnostic from a fresh client attempt.
+
+## 2026-09-21 — one-link chain and async task correction
+
+- A fresh 1.19.10 login supplied exactly one certificate in its legacy chain (`array[1]` in the local crash trace). It therefore contains no separately Xbox-signed link; accepting it as Xbox-authenticated would bypass the server's required-auth policy. The signed-in client UI is not sufficient proof of a trusted network chain.
+- The first diagnostic implementation used array-valued properties on an `AsyncTask`; `pmmpthread` rejected the non-thread-safe default and the server crashed. Root-key lists are now serialized into a string for the worker; signer fingerprint diagnostics use scalar properties only. PHP lint and a repeat boot/client attempt are still required.
+- Keep `xbox-auth=on` by default. For further gameplay testing, using a separate explicitly offline local test profile would require a conscious security trade-off and must not be mistaken for authenticated compatibility.
