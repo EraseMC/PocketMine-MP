@@ -88,3 +88,9 @@
 - A real 1.19.10 client now reaches `LoginPacketHandler`, but JSON mapping rejected missing `CompatibleWithClientSideChunkGen` before authentication. The historical 1.19 model marks that field as introduced in 1.19.80 and `TrustedSkin` in 1.19.20.
 - `ClientData` now defaults both absent fields to false instead of requiring them from older clients. Modern required fields remain checked by the mapper. Protocol commit `a6a1cd684838e171d58424b14bfb639bece68332`.
 - Retest required; this only addresses this specific client-data parsing failure.
+
+## 2026-09-21 — legacy Xbox root selection
+
+- The client now reaches player identification, but a validly signed legacy certificate chain was not marked Xbox-authenticated. The current verifier only recognized Mojang's newer root key; the historical 1.19 implementation also trusted the original root, removed later in commit `5386e8607977583767a62d8f4eba2011f9a050ea`.
+- Reintroduced the original root key for 1.19 profiles only. JWT signature verification and authenticated-XUID checks remain enabled, and modern profiles continue using their prior key policy.
+- Repeat 1.19.10 client login to verify whether the client's certificate was signed by that root. Do not disable `xbox-auth` as a substitute for this check.

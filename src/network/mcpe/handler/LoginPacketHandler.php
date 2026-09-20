@@ -438,7 +438,10 @@ class LoginPacketHandler extends PacketHandler{
 	protected function processLegacySelfSignedLogin(array $legacyCertificate, string $clientDataJwt, bool $authRequired) : void{
 		$this->session->setHandler(null); //drop packets received during login verification
 
-		$rootAuthKeyDer = $this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? null : base64_decode(ProcessLegacyLoginTask::LEGACY_MOJANG_ROOT_PUBLIC_KEY, true);
+		$rootKey = $this->session->getProtocolId() <= ProtocolInfo::PROTOCOL_1_19_80
+			? ProcessLegacyLoginTask::OLD_MOJANG_ROOT_PUBLIC_KEY
+			: ProcessLegacyLoginTask::LEGACY_MOJANG_ROOT_PUBLIC_KEY;
+		$rootAuthKeyDer = $this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? null : base64_decode($rootKey, true);
 		if($rootAuthKeyDer === false){ //should never happen unless the constant is messed up
 			throw new \InvalidArgumentException("Failed to base64-decode hardcoded Mojang root public key");
 		}

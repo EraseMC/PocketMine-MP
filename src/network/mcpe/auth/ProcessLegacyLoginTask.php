@@ -34,6 +34,8 @@ use function igbinary_unserialize;
 
 class ProcessLegacyLoginTask extends AsyncTask{
 	private const TLS_KEY_ON_COMPLETION = "completion";
+	/** Mojang's original Xbox Live chain root, used by 1.19 clients. */
+	public const OLD_MOJANG_ROOT_PUBLIC_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
 
 	/**
 	 * New Mojang root auth key. Mojang notified third-party developers of this change prior to the release of 1.20.0.
