@@ -107,3 +107,9 @@
 - The first diagnostic implementation used array-valued properties on an `AsyncTask`; `pmmpthread` rejected the non-thread-safe default and the server crashed. Root-key lists are now serialized into a string for the worker; signer fingerprint diagnostics use scalar properties only. PHP lint and a repeat boot/client attempt are still required.
 - Keep `xbox-auth=on` by default. For further gameplay testing, using a separate explicitly offline local test profile would require a conscious security trade-off and must not be mistaken for authenticated compatibility.
 - After the thread-safety fix and fresh restart, the real client was disconnected cleanly with `No trusted Xbox root in legacy chain (0 signer keys; SHA-256 prefixes: )`. The server remained running. Combined with the one-link chain in the prior trace, this confirms that this client session has no Xbox-signed legacy certificate link; adding trusted roots cannot authenticate it.
+
+## 2026-09-21 — localhost-only offline gameplay trial
+
+- With explicit user approval, the separate test runtime now sets `server-ip=127.0.0.1`, `enable-ipv6=off`, and `xbox-auth=off`. The UDP socket was verified bound only to `127.0.0.1:19132`; no production configuration changed. This is intentionally not Xbox-authenticated support.
+- The client reached the `logged in` event, then crashed the server at `ItemTagToIdMap::make(534)` because the 1.19 profiles were absent from the tag-path table.
+- Added all 1.19 protocol IDs to that table with the earliest available `item_tags-1.20.0.json` as a provisional recipe-downgrade map. This avoids the missing-key crash but is not a version-accurate recipe compatibility claim. A canonical 1.19 tag snapshot and crafting test remain release gates.
