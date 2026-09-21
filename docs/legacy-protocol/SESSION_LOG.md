@@ -137,3 +137,9 @@
 ## 2026-09-21 — local 1.19.31 client trial
 
 - Added the opt-in `ERASEMC_TEST_1_19_31=1` gate for stable 1.19.30/1.19.31 protocol 554 and matching RakNet discovery advertisement. This profile exercises the `RequestNetworkSettingsPacket` startup path and remains outside `ACCEPTED_PROTOCOL` until validated.
+
+## 2026-09-21 — Minecraft 1.18 implementation started
+
+- Replaced the merged/deleted `feature/legacy-1.19` branches with `feature/legacy-1.18` in PocketMine-MP, BedrockProtocol and BedrockData. User-owned local edits to `src/VersionInfo.php` and `start.cmd` remain untouched.
+- Stable wire profiles are 475 (1.18.0-1.18.2), 486 (1.18.10-1.18.12) and 503 (1.18.30-1.18.33). Preview-only protocols remain out of scope.
+- Restored all three historical immutable block/item data snapshots from the original PMMP history in BedrockData commit `7f7e86c`.
