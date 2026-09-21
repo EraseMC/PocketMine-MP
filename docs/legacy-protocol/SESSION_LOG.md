@@ -149,3 +149,9 @@
 - Removed protocols 475, 486 and 503 from `ACCEPTED_PROTOCOL` pending real-client gameplay verification. The opt-in `ERASEMC_TEST_1_18_PROTOCOL` gate remains available for local trials.
 - Corrected the 1.18.0 `SubChunkPacket` layout: it contains an absolute sub-chunk position before the response data and an optional blob-hash flag even when caching is disabled. Added a fixed-byte regression test.
 - BedrockProtocol PHPUnit: 515 tests, 993 assertions pass. User is obtaining clients for each of the three protocol profiles; real join and gameplay gates are still open.
+
+## 2026-09-21 — 1.18.2 live login trial
+
+- A 1.18.2 client (protocol 475) completed login and joined the world, then disconnected on the first `PlayerAuthInputPacket` with a short-read error.
+- Historical BedrockProtocol commit `0c00504` shows that `interactionMode` was added in 1.19.0. The decoder had read this field from 1.18 traffic, shifting all following fields. Gate both decoding and encoding at protocol 527.
+- Added a fixed-layout regression test for both sides of that boundary; BedrockProtocol PHPUnit: 516 tests, 996 assertions. Client movement and gameplay still need a live retest after restart.
