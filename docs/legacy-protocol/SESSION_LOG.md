@@ -143,3 +143,9 @@
 - Replaced the merged/deleted `feature/legacy-1.19` branches with `feature/legacy-1.18` in PocketMine-MP, BedrockProtocol and BedrockData. User-owned local edits to `src/VersionInfo.php` and `start.cmd` remain untouched.
 - Stable wire profiles are 475 (1.18.0-1.18.2), 486 (1.18.10-1.18.12) and 503 (1.18.30-1.18.33). Preview-only protocols remain out of scope.
 - Restored all three historical immutable block/item data snapshots from the original PMMP history in BedrockData commit `7f7e86c`.
+
+## 2026-09-21 — 1.18 codec gate and sub-chunk correction
+
+- Removed protocols 475, 486 and 503 from `ACCEPTED_PROTOCOL` pending real-client gameplay verification. The opt-in `ERASEMC_TEST_1_18_PROTOCOL` gate remains available for local trials.
+- Corrected the 1.18.0 `SubChunkPacket` layout: it contains an absolute sub-chunk position before the response data and an optional blob-hash flag even when caching is disabled. Added a fixed-byte regression test.
+- BedrockProtocol PHPUnit: 515 tests, 993 assertions pass. User is obtaining clients for each of the three protocol profiles; real join and gameplay gates are still open.
