@@ -86,7 +86,7 @@ class ProcessLegacyLoginTask extends AsyncTask{
 			$this->clientPublicKeyDer = $this->validateChain();
 			AuthJwtHelper::validateSelfSignedToken($this->clientDataJwt, $this->clientPublicKeyDer);
 			$this->error = !$this->authenticated && $this->authRequired
-				? "No trusted Xbox root in legacy chain (" . $this->signerKeyCount . " signer keys; SHA-256 prefixes: " . $this->signerFingerprints . ")"
+				? "No trusted Xbox root in legacy chain (" . $this->signerKeyCount . " signer keys; SHA-256 prefixes: " . $this->signerFingerprints . "; client key: " . substr(hash('sha256', $this->clientPublicKeyDer), 0, 16) . ")"
 				: null;
 		}catch(VerifyLoginException $e){
 			$disconnectMessage = $e->getDisconnectMessage();
