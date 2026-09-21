@@ -81,7 +81,8 @@ final class SessionStartPacketHandler extends PacketHandler{
 	}
 
 	protected function isCompatibleProtocol(int $protocolVersion) : bool{
-		$test118Protocol = (int) (getenv('ERASEMC_TEST_1_18_PROTOCOL') ?: 0);
+		$test118ProtocolEnv = getenv('ERASEMC_TEST_1_18_PROTOCOL');
+		$test118Protocol = $test118ProtocolEnv === false ? 0 : (int) $test118ProtocolEnv;
 		return in_array($protocolVersion, ProtocolInfo::ACCEPTED_PROTOCOL, true)
 			|| ($protocolVersion === $test118Protocol && in_array($test118Protocol, [ProtocolInfo::PROTOCOL_1_18_0, ProtocolInfo::PROTOCOL_1_18_10, ProtocolInfo::PROTOCOL_1_18_30], true))
 			|| ($protocolVersion === ProtocolInfo::PROTOCOL_1_19_10 && getenv('ERASEMC_TEST_1_19_10') === '1')

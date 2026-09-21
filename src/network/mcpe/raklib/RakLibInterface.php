@@ -263,7 +263,8 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 
 	public function setName(string $name) : void{
 		$info = $this->server->getQueryInformation();
-		$test118Protocol = (int) (getenv('ERASEMC_TEST_1_18_PROTOCOL') ?: 0);
+		$test118ProtocolEnv = getenv('ERASEMC_TEST_1_18_PROTOCOL');
+		$test118Protocol = $test118ProtocolEnv === false ? 0 : (int) $test118ProtocolEnv;
 		$test118Version = match($test118Protocol){
 			ProtocolInfo::PROTOCOL_1_18_0 => '1.18.2',
 			ProtocolInfo::PROTOCOL_1_18_10 => '1.18.12',

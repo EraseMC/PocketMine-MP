@@ -88,9 +88,7 @@ class ProcessLegacyLoginTask extends AsyncTask{
 			//Essential compatibility: legacy 1.19 clients may only provide a self-signed chain.
 			//This deliberately treats a cryptographically valid chain as authenticated without a Mojang trust root.
 			$this->authenticated = true;
-			$this->error = !$this->authenticated && $this->authRequired
-				? "No trusted Xbox root in legacy chain (" . $this->signerKeyCount . " signer keys; SHA-256 prefixes: " . $this->signerFingerprints . "; client key: " . substr(hash('sha256', $this->clientPublicKeyDer), 0, 16) . ")"
-				: null;
+			$this->error = null;
 		}catch(VerifyLoginException $e){
 			$disconnectMessage = $e->getDisconnectMessage();
 			$this->error = $disconnectMessage instanceof Translatable ? new NonThreadSafeValue($disconnectMessage) : $disconnectMessage;

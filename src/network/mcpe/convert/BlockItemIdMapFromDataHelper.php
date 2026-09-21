@@ -16,6 +16,7 @@ use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Filesystem;
+use pocketmine\utils\Utils;
 use function is_array;
 use function is_string;
 use function json_decode;
@@ -50,11 +51,14 @@ final class BlockItemIdMapFromDataHelper{
 		if(!is_array($map)){
 			throw new AssumptionFailedError("Invalid legacy block-item map for protocol $protocolId");
 		}
-		foreach($map as $blockId => $itemId){
+		/** @var array<mixed, mixed> $map */
+		$result = [];
+		foreach(Utils::promoteKeys($map) as $blockId => $itemId){
 			if(!is_string($blockId) || !is_string($itemId)){
 				throw new AssumptionFailedError("Invalid legacy block-item map entry for protocol $protocolId");
 			}
+			$result[$blockId] = $itemId;
 		}
-		return new BlockItemIdMap($map);
+		return new BlockItemIdMap($result);
 	}
 }
