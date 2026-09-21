@@ -32,7 +32,7 @@
 
 ## ADR-005: No compatibility claims before real-client testing
 
-**Decision:** The public supported-version list remains separate from `ACCEPTED_PROTOCOL` during implementation. A profile may be accepted only after its release gates are complete.
+**Decision:** The public fully verified list remains separate from `ACCEPTED_PROTOCOL`. The preferred gate is real-client verification before admission. The owner explicitly approved a 1.18.x release with protocol 503 untested; document such exceptions without claiming full compatibility.
 
 **Why:** A server can complete a login handshake yet fail at chunks, inventories, or entity metadata. Advertising an untested version harms operators.
 
@@ -40,6 +40,6 @@
 
 **Context:** `ProtocolInfo.php` is generated from the newest BedrockData protocol metadata. Ad-hoc legacy constants would be silently deleted by the next regeneration.
 
-**Decision:** Maintain one reviewed profile registry in `BedrockProtocol/tools/protocol-profiles.php`. The generator requires a matching named released profile for its input version and emits both the named constants and the accepted-profile list. A profile remains non-accepted until its release gates pass.
+**Decision:** Maintain one reviewed profile registry in `BedrockProtocol/tools/protocol-profiles.php`. The generator requires a matching named released profile for its input version and emits both the named constants and the accepted-profile list. An owner-approved release exception may admit a profile before full client verification, with that status recorded explicitly.
 
 **Status:** Accepted.
