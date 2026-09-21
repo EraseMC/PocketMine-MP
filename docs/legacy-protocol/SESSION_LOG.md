@@ -133,3 +133,7 @@
 ## 2026-09-21 — local 1.19.22 client trial
 
 - Added the opt-in `ERASEMC_TEST_1_19_22=1` gate for stable 1.19.21/1.19.22 protocol 545 and matching RakNet discovery advertisement. It remains an experimental manual-test gate and does not alter `ACCEPTED_PROTOCOL`.
+
+## 2026-09-21 — local 1.19.31 client trial
+
+- Added the opt-in `ERASEMC_TEST_1_19_31=1` gate for stable 1.19.30/1.19.31 protocol 554 and matching RakNet discovery advertisement. This profile exercises the `RequestNetworkSettingsPacket` startup path and remains outside `ACCEPTED_PROTOCOL` until validated.

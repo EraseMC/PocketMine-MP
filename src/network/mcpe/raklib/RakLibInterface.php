@@ -265,8 +265,9 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 		$info = $this->server->getQueryInformation();
 		$test11910 = getenv('ERASEMC_TEST_1_19_10') === '1';
 		$test11922 = getenv('ERASEMC_TEST_1_19_22') === '1';
-		$advertisedProtocol = $test11922 ? ProtocolInfo::PROTOCOL_1_19_21 : ($test11910 ? ProtocolInfo::PROTOCOL_1_19_10 : ProtocolInfo::CURRENT_PROTOCOL);
-		$advertisedVersion = $test11922 ? '1.19.22' : ($test11910 ? '1.19.10' : ProtocolInfo::MINECRAFT_VERSION_NETWORK);
+		$test11931 = getenv('ERASEMC_TEST_1_19_31') === '1';
+		$advertisedProtocol = $test11931 ? ProtocolInfo::PROTOCOL_1_19_30 : ($test11922 ? ProtocolInfo::PROTOCOL_1_19_21 : ($test11910 ? ProtocolInfo::PROTOCOL_1_19_10 : ProtocolInfo::CURRENT_PROTOCOL));
+		$advertisedVersion = $test11931 ? '1.19.31' : ($test11922 ? '1.19.22' : ($test11910 ? '1.19.10' : ProtocolInfo::MINECRAFT_VERSION_NETWORK));
 
 		$this->interface->setName(implode(";",
 			[
