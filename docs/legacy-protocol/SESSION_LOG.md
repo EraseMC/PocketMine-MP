@@ -155,3 +155,4 @@
 - A 1.18.2 client (protocol 475) completed login and joined the world, then disconnected on the first `PlayerAuthInputPacket` with a short-read error.
 - Historical BedrockProtocol commit `0c00504` shows that `interactionMode` was added in 1.19.0. The decoder had read this field from 1.18 traffic, shifting all following fields. Gate both decoding and encoding at protocol 527.
 - Added a fixed-layout regression test for both sides of that boundary; BedrockProtocol PHPUnit: 516 tests, 996 assertions. Client movement and gameplay still need a live retest after restart.
+- The next live 1.18.2 attempt joined and moved, but breaking a block produced a `PlayerActionPacket` short-read. Historical commit `0c00504` also added `resultPosition` to this packet in 1.19.0. Gate it at 527 and use `blockPosition` as the legacy result position; added a byte-layout test. BedrockProtocol PHPUnit: 517 tests, 999 assertions. Block-breaking live retest pending.
