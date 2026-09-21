@@ -180,7 +180,10 @@ final class BlockTranslator{
 		ProtocolInfo::PROTOCOL_1_19_21 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.19.40', self::BLOCK_STATE_META_MAP_PATH => '-1.19.40'],
 		ProtocolInfo::PROTOCOL_1_19_20 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.19.40', self::BLOCK_STATE_META_MAP_PATH => '-1.19.40'],
 		ProtocolInfo::PROTOCOL_1_19_10 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.19.10', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
-		ProtocolInfo::PROTOCOL_1_19_0 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.19.10', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10']
+		ProtocolInfo::PROTOCOL_1_19_0 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.19.10', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
+		ProtocolInfo::PROTOCOL_1_18_30 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.18.30', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
+		ProtocolInfo::PROTOCOL_1_18_10 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.18.10', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
+		ProtocolInfo::PROTOCOL_1_18_0 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.18.0', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10']
 	];
 
 	/**

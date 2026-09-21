@@ -195,7 +195,10 @@ final class ItemTranslator{
 			ProtocolInfo::PROTOCOL_1_19_21,
 			ProtocolInfo::PROTOCOL_1_19_20,
 			ProtocolInfo::PROTOCOL_1_19_10,
-			ProtocolInfo::PROTOCOL_1_19_0 => 71,
+			ProtocolInfo::PROTOCOL_1_19_0,
+			ProtocolInfo::PROTOCOL_1_18_30 => 71,
+			ProtocolInfo::PROTOCOL_1_18_10 => 61,
+			ProtocolInfo::PROTOCOL_1_18_0 => 51,
 
 			default => throw new AssumptionFailedError("Unknown protocol ID $protocolId"),
 		};
