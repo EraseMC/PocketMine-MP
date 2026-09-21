@@ -123,3 +123,9 @@
 - The localhost offline test reached `joined the game` at 21:36:35 after the recipe guard fix, with no immediate crash. This validates only a narrow 1.19.10 join smoke test, not complete gameplay or authenticated support.
 - Essential contains an unconditional `$this->authenticated = true` immediately after signature verification (`ProcessLoginTask.php:170`, commit `2dc1f29efa` by blame), making any valid self-signed legacy chain appear Xbox-authenticated. This is not adopted: it would bypass the server's trust-root policy. Our rejection diagnostic now also reports the final client-key fingerprint; equality with the sole signer fingerprint proves a self-signed chain without exposing key material.
 - Authenticated retest produced signer fingerprint `148d744560723b8b` and the identical final client-key fingerprint. The trusted original and replacement Mojang roots fingerprint as `fa52209a3b4f317f` and `43eef8791c71d29d`. This proves the observed 1.19.10 login is self-signed, not Xbox-certified. Keep rejecting it with `xbox-auth=on`; Essential only accepts the same shape because of its unconditional authentication bypass.
+
+## 2026-09-21 — Essential-compatible legacy authentication
+
+- At the user's explicit request, the previous decision was superseded and Essential's login behaviour was adopted exactly: after the complete legacy certificate chain and client-data JWT signatures validate, `ProcessLegacyLoginTask` unconditionally marks the session authenticated.
+- Consequently, `xbox-auth=on` still rejects malformed, expired, or cryptographically invalid legacy login data, but it no longer requires a chain signer to match a trusted Mojang/Xbox root. A valid self-signed legacy chain is accepted as authenticated, matching Essential's `ProcessLoginTask` implementation.
+- This compatibility behaviour weakens the meaning of Xbox authentication and must be reviewed before merging `feature/legacy-1.19` into `stable`.
