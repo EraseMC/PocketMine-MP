@@ -129,3 +129,7 @@
 - At the user's explicit request, the previous decision was superseded and Essential's login behaviour was adopted exactly: after the complete legacy certificate chain and client-data JWT signatures validate, `ProcessLegacyLoginTask` unconditionally marks the session authenticated.
 - Consequently, `xbox-auth=on` still rejects malformed, expired, or cryptographically invalid legacy login data, but it no longer requires a chain signer to match a trusted Mojang/Xbox root. A valid self-signed legacy chain is accepted as authenticated, matching Essential's `ProcessLoginTask` implementation.
 - This compatibility behaviour weakens the meaning of Xbox authentication and must be reviewed before merging `feature/legacy-1.19` into `stable`.
+
+## 2026-09-21 — local 1.19.22 client trial
+
+- Added the opt-in `ERASEMC_TEST_1_19_22=1` gate for stable 1.19.21/1.19.22 protocol 545 and matching RakNet discovery advertisement. It remains an experimental manual-test gate and does not alter `ACCEPTED_PROTOCOL`.
