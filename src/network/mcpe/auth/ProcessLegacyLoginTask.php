@@ -85,9 +85,12 @@ class ProcessLegacyLoginTask extends AsyncTask{
 		try{
 			$this->clientPublicKeyDer = $this->validateChain();
 			AuthJwtHelper::validateSelfSignedToken($this->clientDataJwt, $this->clientPublicKeyDer);
-			//Essential compatibility: legacy 1.19 clients may only provide a self-signed chain.
-			//This deliberately treats a cryptographically valid chain as authenticated without a Mojang trust root.
-			$this->authenticated = true;
+			if($this->rootAuthKeys !== null){
+				//Essential compatibility: legacy 1.19 clients may only provide a self-signed chain.
+				//This deliberately treats a cryptographically valid chain as authenticated without a Mojang trust root.
+				//Clients given no trust roots (1.21.93+) send a self-signed chain without an XUID, so they must stay unauthenticated.
+				$this->authenticated = true;
+			}
 			$this->error = null;
 		}catch(VerifyLoginException $e){
 			$disconnectMessage = $e->getDisconnectMessage();
