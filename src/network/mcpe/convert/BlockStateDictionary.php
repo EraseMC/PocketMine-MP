@@ -26,6 +26,8 @@ namespace pocketmine\network\mcpe\convert;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockTypeNames;
 use pocketmine\nbt\NbtDataException;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\Tag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
@@ -56,6 +58,12 @@ final class BlockStateDictionary{
 	 * @phpstan-var array<string, array<int, int>|int>|null
 	 */
 	private ?array $idMetaToStateIdLookupCache = null;
+
+	/**
+	 * @var int[][]|null
+	 * @phpstan-var array<string, array<int, int>>|null
+	 */
+	private ?array $originalIdMetaToStateIdLookupCache = null;
 
 	/**
 	 * @var Tag[][]
@@ -214,6 +222,22 @@ final class BlockStateDictionary{
 	}
 
 	/**
+	 * Returns the state ID for the given block ID and meta value, where the block ID is the name used by the palette's
+	 * own version rather than the current one (e.g. "minecraft:wool" rather than "minecraft:red_wool"). Legacy clients
+	 * identify block items this way.
+	 */
+	public function lookupStateIdFromOriginalIdMeta(string $id, int $meta) : ?int{
+		if($this->originalIdMetaToStateIdLookupCache === null){
+			$table = [];
+			foreach($this->states as $i => $state){
+				$table[$state->generateStateData()->getName()][$state->getMeta()] ??= $i;
+			}
+			$this->originalIdMetaToStateIdLookupCache = $table;
+		}
+		return $this->originalIdMetaToStateIdLookupCache[$id][$meta] ?? null;
+	}
+
+	/**
 	 * Returns an array mapping runtime ID => blockstate data.
 	 * @return BlockStateDictionaryEntry[]
 	 * @phpstan-return array<int, BlockStateDictionaryEntry>
@@ -233,7 +257,34 @@ final class BlockStateDictionary{
 		);
 	}
 
-	public static function loadFromString(string $blockPaletteContents, string $metaMapContents) : self{
+	/**
+	 * Loads a pre-1.16.100 palette: a network-NBT list of {block, id} compounds, sent to the client as-is. The list
+	 * order defines the runtime IDs.
+	 *
+	 * @return BlockStateData[]
+	 * @phpstan-return list<BlockStateData>
+	 */
+	public static function loadLegacyPaletteFromString(string $blockPaletteContents) : array{
+		$root = (new NetworkNbtSerializer())->read($blockPaletteContents)->getTag();
+		if(!$root instanceof ListTag){
+			throw new \InvalidArgumentException("Legacy block palette root should be a list, got " . get_debug_type($root));
+		}
+		$states = [];
+		foreach($root->getValue() as $entry){
+			$block = $entry instanceof CompoundTag ? $entry->getCompoundTag("block") : null;
+			if($block === null){
+				throw new \InvalidArgumentException("Legacy block palette entries should be compounds with a block state");
+			}
+			$states[] = BlockStateData::fromNbt($block);
+		}
+		return $states;
+	}
+
+	/**
+	 * @param BlockStateData[] $palette
+	 * @phpstan-param list<BlockStateData> $palette
+	 */
+	public static function loadFromPalette(array $palette, string $metaMapContents) : self{
 		$upgrader = GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader();
 		$metaMap = json_decode($metaMapContents, flags: JSON_THROW_ON_ERROR);
 		if(!is_array($metaMap)){
@@ -252,7 +303,7 @@ final class BlockStateDictionary{
 			}
 		}
 
-		foreach(self::loadPaletteFromString($blockPaletteContents) as $i => $state){
+		foreach($palette as $i => $state){
 			$meta = $metaMap[$i] ?? null;
 			if($meta === null){
 				throw new \InvalidArgumentException("Missing associated meta value for state $i (" . $state->toNbt() . ")");
@@ -267,4 +318,9 @@ final class BlockStateDictionary{
 
 		return new self($entries);
 	}
+
+	public static function loadFromString(string $blockPaletteContents, string $metaMapContents) : self{
+		return self::loadFromPalette(self::loadPaletteFromString($blockPaletteContents), $metaMapContents);
+	}
+
 }

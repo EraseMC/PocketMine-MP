@@ -95,6 +95,14 @@ final class ItemTypeDictionaryFromDataHelper{
 		ProtocolInfo::PROTOCOL_1_17_30 => "-1.17.30",
 		ProtocolInfo::PROTOCOL_1_17_10 => "-1.17.10",
 		ProtocolInfo::PROTOCOL_1_17_0 => "-1.17.0",
+		//1.16.100 introduced server-sent item runtime IDs; the 1.16.100 table is unchanged up to 1.16.220
+		ProtocolInfo::PROTOCOL_1_16_220 => "-1.16.100",
+		ProtocolInfo::PROTOCOL_1_16_210 => "-1.16.100",
+		ProtocolInfo::PROTOCOL_1_16_200 => "-1.16.100",
+		ProtocolInfo::PROTOCOL_1_16_100 => "-1.16.100",
+		//earlier profiles use the legacy numeric item IDs
+		ProtocolInfo::PROTOCOL_1_16_20 => "-1.16.0",
+		ProtocolInfo::PROTOCOL_1_16_0 => "-1.16.0",
 	];
 
 	public static function loadFromProtocolId(int $protocolId) : ItemTypeDictionary{

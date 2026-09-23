@@ -39,6 +39,7 @@ use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\network\mcpe\protocol\types\SerializableVoxelCells;
 use pocketmine\network\mcpe\protocol\types\SerializableVoxelShape;
 use pocketmine\network\mcpe\protocol\VoxelShapesPacket;
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Filesystem;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
@@ -191,11 +192,38 @@ class StaticPacketCache{
 	){
 	}
 
+	/**
+	 * Historical data sent to 1.16 clients, loaded on first use.
+	 * @var BiomeDefinitionListPacket[]|AvailableActorIdentifiersPacket[]
+	 * @phpstan-var array<string, BiomeDefinitionListPacket|AvailableActorIdentifiersPacket>
+	 */
+	private array $legacyPackets = [];
+
 	public function getBiomeDefs(int $protocolId) : BiomeDefinitionListPacket{
+		if($protocolId < ProtocolInfo::PROTOCOL_1_17_0){
+			$path = $protocolId >= ProtocolInfo::PROTOCOL_1_16_210 ? BedrockDataFiles::BIOME_DEFINITIONS_1_16_210_NBT : BedrockDataFiles::BIOME_DEFINITIONS_1_16_0_NBT;
+			$packet = $this->legacyPackets[$path] ??= BiomeDefinitionListPacket::createLegacy(self::loadCompoundFromFile($path));
+			if(!$packet instanceof BiomeDefinitionListPacket){
+				throw new AssumptionFailedError("Cached packet type mismatch");
+			}
+			return $packet;
+		}
 		return $protocolId >= ProtocolInfo::PROTOCOL_1_21_80 ? $this->biomeDefs : $this->legacyBiomeDefs;
 	}
 
-	public function getAvailableActorIdentifiers() : AvailableActorIdentifiersPacket{
+	public function getAvailableActorIdentifiers(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : AvailableActorIdentifiersPacket{
+		if($protocolId < ProtocolInfo::PROTOCOL_1_17_0){
+			$path = match(true){
+				$protocolId >= ProtocolInfo::PROTOCOL_1_16_100 => BedrockDataFiles::ENTITY_IDENTIFIERS_1_16_100_NBT,
+				$protocolId >= ProtocolInfo::PROTOCOL_1_16_20 => BedrockDataFiles::ENTITY_IDENTIFIERS_1_16_20_NBT,
+				default => BedrockDataFiles::ENTITY_IDENTIFIERS_1_16_0_NBT,
+			};
+			$packet = $this->legacyPackets[$path] ??= AvailableActorIdentifiersPacket::create(self::loadCompoundFromFile($path));
+			if(!$packet instanceof AvailableActorIdentifiersPacket){
+				throw new AssumptionFailedError("Cached packet type mismatch");
+			}
+			return $packet;
+		}
 		return $this->availableActorIdentifiers;
 	}
 

@@ -187,7 +187,20 @@ final class BlockTranslator{
 		ProtocolInfo::PROTOCOL_1_17_40 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.17.40', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
 		ProtocolInfo::PROTOCOL_1_17_30 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.17.30', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
 		ProtocolInfo::PROTOCOL_1_17_10 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.17.10', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
-		ProtocolInfo::PROTOCOL_1_17_0 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.17.0', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10']
+		ProtocolInfo::PROTOCOL_1_17_0 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.17.0', self::BLOCK_STATE_META_MAP_PATH => '-1.19.10'],
+		ProtocolInfo::PROTOCOL_1_16_220 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.16.210', self::BLOCK_STATE_META_MAP_PATH => '-1.16.210'],
+		ProtocolInfo::PROTOCOL_1_16_210 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.16.210', self::BLOCK_STATE_META_MAP_PATH => '-1.16.210'],
+		ProtocolInfo::PROTOCOL_1_16_200 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.16.100', self::BLOCK_STATE_META_MAP_PATH => '-1.16.100'],
+		ProtocolInfo::PROTOCOL_1_16_100 => [self::CANONICAL_BLOCK_STATES_PATH => '-1.16.100', self::BLOCK_STATE_META_MAP_PATH => '-1.16.100'],
+	];
+
+	/**
+	 * Before 1.16.100 the server sends the whole block palette in StartGamePacket; these files are that list and define
+	 * the runtime IDs by their order.
+	 */
+	private const LEGACY_NETWORK_PALETTES = [
+		ProtocolInfo::PROTOCOL_1_16_20 => [BedrockDataFiles::REQUIRED_BLOCK_STATES_1_16_20_NBT, '-1.16.20'],
+		ProtocolInfo::PROTOCOL_1_16_0 => [BedrockDataFiles::REQUIRED_BLOCK_STATES_1_16_0_NBT, '-1.16.0'],
 	];
 
 	/**
@@ -201,6 +214,16 @@ final class BlockTranslator{
 	private int $fallbackStateId;
 
 	public static function loadFromProtocolId(int $protocolId) : BlockTranslator{
+		if(isset(self::LEGACY_NETWORK_PALETTES[$protocolId])){
+			[$palettePath, $metaMapSuffix] = self::LEGACY_NETWORK_PALETTES[$protocolId];
+			$networkPalette = Filesystem::fileGetContents($palettePath);
+			$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", $metaMapSuffix . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+			return new self(
+				BlockStateDictionary::loadFromPalette(BlockStateDictionary::loadLegacyPaletteFromString($networkPalette), $metaMappingRaw),
+				GlobalBlockStateHandlers::getSerializer(),
+				$networkPalette
+			);
+		}
 		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
 		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
 		return new self(
@@ -211,7 +234,8 @@ final class BlockTranslator{
 
 	public function __construct(
 		private BlockStateDictionary $blockStateDictionary,
-		private BlockStateSerializer $blockStateSerializer
+		private BlockStateSerializer $blockStateSerializer,
+		private ?string $legacyNetworkPalette = null
 	){
 		$this->fallbackStateData = BlockStateData::current(BlockTypeNames::INFO_UPDATE, []);
 		$this->fallbackStateId = $this->blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ??
@@ -266,4 +290,9 @@ final class BlockTranslator{
 	public function getBlockStateDictionary() : BlockStateDictionary{ return $this->blockStateDictionary; }
 
 	public function getFallbackStateData() : BlockStateData{ return $this->fallbackStateData; }
+
+	/**
+	 * Returns the encoded block palette which must be sent in StartGamePacket, for protocols before 1.16.100.
+	 */
+	public function getLegacyNetworkPalette() : ?string{ return $this->legacyNetworkPalette; }
 }

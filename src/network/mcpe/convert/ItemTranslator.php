@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\data\bedrock\block\BlockStateDeserializeException;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
 use pocketmine\data\bedrock\item\ItemDeserializer;
@@ -35,6 +36,7 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\AssumptionFailedError;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 
 /**
@@ -50,6 +52,7 @@ final class ItemTranslator{
 		private ItemDeserializer $itemDeserializer,
 		private BlockItemIdMap $blockItemIdMap,
 		private ItemIdMetaDowngrader $itemDataDowngrader,
+		private bool $blockItemsUseLegacyMeta = false
 	){}
 
 	/**
@@ -116,6 +119,10 @@ final class ItemTranslator{
 			throw TypeConversionException::wrap($e, "Invalid network itemstack ID $networkId");
 		}
 
+		if($this->blockItemsUseLegacyMeta){
+			return $this->fromLegacyNetworkId($stringId, $networkMeta);
+		}
+
 		$blockStateData = null;
 		if($this->blockItemIdMap->lookupBlockId($stringId) !== null){
 			$blockStateData = $this->blockStateDictionary->generateCurrentDataFromStateId($networkBlockRuntimeId);
@@ -130,6 +137,38 @@ final class ItemTranslator{
 
 		try{
 			return $this->itemDeserializer->deserializeType(new SavedItemData($stringId, $networkMeta, $blockStateData));
+		}catch(ItemTypeDeserializeException $e){
+			throw TypeConversionException::wrap($e, "Invalid network itemstack data");
+		}
+	}
+
+	/**
+	 * Before 1.16.220 item stacks carry no block runtime ID; block items select their block state with the legacy
+	 * damage value instead.
+	 *
+	 * @throws TypeConversionException
+	 */
+	private function fromLegacyNetworkId(string $networkStringId, int $networkMeta) : Item{
+		[$stringId, $meta] = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader()->upgrade($networkStringId, $networkMeta);
+
+		$blockStateData = null;
+		//the block item map and the palette both use the legacy (pre-flattening) names of the client's version
+		if(($blockId = $this->blockItemIdMap->lookupBlockId($networkStringId)) !== null){
+			$runtimeId = $this->blockStateDictionary->lookupStateIdFromOriginalIdMeta($blockId, $networkMeta) ??
+				$this->blockStateDictionary->lookupStateIdFromOriginalIdMeta($blockId, 0);
+			$blockStateData = $runtimeId !== null ? $this->blockStateDictionary->generateCurrentDataFromStateId($runtimeId) : null;
+			if($blockStateData === null){
+				try{
+					$blockStateData = GlobalBlockStateHandlers::getUpgrader()->getBlockIdMetaUpgrader()->fromStringIdMeta($networkStringId, $networkMeta);
+				}catch(BlockStateDeserializeException $e){
+					throw TypeConversionException::wrap($e, "No block state for legacy block item $networkStringId:$networkMeta");
+				}
+			}
+			$meta = 0;
+		}
+
+		try{
+			return $this->itemDeserializer->deserializeType(new SavedItemData($stringId, $meta, $blockStateData));
 		}catch(ItemTypeDeserializeException $e){
 			throw TypeConversionException::wrap($e, "Invalid network itemstack data");
 		}
@@ -202,7 +241,15 @@ final class ItemTranslator{
 			ProtocolInfo::PROTOCOL_1_17_40,
 			ProtocolInfo::PROTOCOL_1_17_30 => 41,
 			ProtocolInfo::PROTOCOL_1_17_10,
-			ProtocolInfo::PROTOCOL_1_17_0 => 31,
+			ProtocolInfo::PROTOCOL_1_17_0,
+			ProtocolInfo::PROTOCOL_1_16_220,
+			ProtocolInfo::PROTOCOL_1_16_210,
+			ProtocolInfo::PROTOCOL_1_16_200 => 31,
+
+			ProtocolInfo::PROTOCOL_1_16_100 => 21,
+
+			ProtocolInfo::PROTOCOL_1_16_20,
+			ProtocolInfo::PROTOCOL_1_16_0 => 11,
 
 			default => throw new AssumptionFailedError("Unknown protocol ID $protocolId"),
 		};

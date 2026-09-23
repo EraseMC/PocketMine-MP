@@ -103,7 +103,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 			}
 			$levelSettings->experiments = new Experiments([], false);
 
-			$this->session->sendDataPacket(StartGamePacket::create(
+			$startGame = StartGamePacket::create(
 				$this->player->getId(),
 				$this->player->getId(),
 				$typeConverter->coreGameModeToProtocol($this->player->getGamemode()),
@@ -139,7 +139,12 @@ class PreSpawnPacketHandler extends PacketHandler{
 				$protocolId >= ProtocolInfo::PROTOCOL_1_26_50 ? StaticPacketCache::getInstance()->getBlockPaletteEntries() : [],
 				0,
 				$typeConverter->getItemTypeDictionary()->getEntries(),
-			));
+			);
+			$legacyBlockPalette = $typeConverter->getBlockTranslator()->getLegacyNetworkPalette();
+			if($legacyBlockPalette !== null){
+				$startGame->legacyBlockPaletteNbt = $legacyBlockPalette;
+			}
+			$this->session->sendDataPacket($startGame);
 
 			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_60){
 				$this->session->getLogger()->debug("Sending items");
@@ -147,7 +152,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 			}
 
 			$this->session->getLogger()->debug("Sending actor identifiers");
-			$this->session->sendDataPacket(StaticPacketCache::getInstance()->getAvailableActorIdentifiers());
+			$this->session->sendDataPacket(StaticPacketCache::getInstance()->getAvailableActorIdentifiers($this->session->getProtocolId()));
 
 			$this->session->getLogger()->debug("Sending biome definitions");
 			$this->session->sendDataPacket(StaticPacketCache::getInstance()->getBiomeDefs($this->session->getProtocolId()));

@@ -48,7 +48,13 @@ final class BlockItemIdMapFromDataHelper{
 			ProtocolInfo::PROTOCOL_1_17_40,
 			ProtocolInfo::PROTOCOL_1_17_30,
 			ProtocolInfo::PROTOCOL_1_17_10,
-			ProtocolInfo::PROTOCOL_1_17_0 => BedrockDataFiles::BLOCK_ID_TO_ITEM_ID_MAP_1_18_10_JSON,
+			ProtocolInfo::PROTOCOL_1_17_0,
+			ProtocolInfo::PROTOCOL_1_16_220,
+			ProtocolInfo::PROTOCOL_1_16_210,
+			ProtocolInfo::PROTOCOL_1_16_200,
+			ProtocolInfo::PROTOCOL_1_16_100,
+			ProtocolInfo::PROTOCOL_1_16_20,
+			ProtocolInfo::PROTOCOL_1_16_0 => BedrockDataFiles::BLOCK_ID_TO_ITEM_ID_MAP_1_18_10_JSON,
 			default => throw new AssumptionFailedError("Unknown legacy protocol ID $protocolId"),
 		};
 		$map = json_decode(Filesystem::fileGetContents($path), associative: true, flags: JSON_THROW_ON_ERROR);
