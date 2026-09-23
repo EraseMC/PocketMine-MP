@@ -49,6 +49,7 @@ use pocketmine\network\mcpe\InventoryManager;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
 use pocketmine\network\mcpe\protocol\ActorPickRequestPacket;
+use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\BlockPickRequestPacket;
@@ -787,6 +788,24 @@ class InGamePacketHandler extends PacketHandler{
 		}catch(\UnexpectedValueException $e){
 			throw PacketHandlingException::wrap($e);
 		}
+	}
+
+	public function handleAdventureSettings(AdventureSettingsPacket $packet) : bool{
+		if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_0){
+			return true; //newer clients report flight via PlayerAuthInput/RequestAbility
+		}
+
+		if($packet->targetActorUniqueId !== $this->player->getId()){
+			return false; //TODO: operators can change other people's permissions using this
+		}
+
+		$isFlying = $packet->getFlag(AdventureSettingsPacket::FLYING);
+		if($isFlying !== $this->player->isFlying() && !$this->player->toggleFlight($isFlying)){
+			$this->session->syncAbilities($this->player);
+		}
+
+		//TODO: check for other changes
+		return true;
 	}
 
 	public function handleBlockActorData(BlockActorDataPacket $packet) : bool{

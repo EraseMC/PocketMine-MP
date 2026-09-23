@@ -61,6 +61,7 @@ use pocketmine\network\mcpe\handler\PreSpawnPacketHandler;
 use pocketmine\network\mcpe\handler\ResourcePacksPacketHandler;
 use pocketmine\network\mcpe\handler\SessionStartPacketHandler;
 use pocketmine\network\mcpe\handler\SpawnResponsePacketHandler;
+use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
@@ -1214,6 +1215,11 @@ class NetworkSession{
 	}
 
 	public function syncAbilities(Player $for) : void{
+		if($this->getProtocolId() < ProtocolInfo::PROTOCOL_1_19_10){
+			$this->syncLegacyAdventureSettings($for);
+			return;
+		}
+
 		$isOp = $for->hasPermission(DefaultPermissions::ROOT_OPERATOR);
 
 		//ALL of these need to be set for the base layer, otherwise the client will cry
@@ -1263,6 +1269,10 @@ class NetworkSession{
 		if($this->player === null){
 			throw new \LogicException("Cannot sync adventure settings for a player that is not yet created");
 		}
+		if($this->getProtocolId() < ProtocolInfo::PROTOCOL_1_19_10){
+			$this->syncLegacyAdventureSettings($this->player);
+			return;
+		}
 		//everything except auto jump is handled via UpdateAbilitiesPacket
 		$this->sendDataPacket(UpdateAdventureSettingsPacket::create(
 			noAttackingMobs: false,
@@ -1271,6 +1281,41 @@ class NetworkSession{
 			showNameTags: true,
 			autoJump: $this->player->hasAutoJump()
 		));
+	}
+
+	/**
+	 * Clients older than 1.19.10 don't know UpdateAbilities/UpdateAdventureSettings; they receive abilities, permissions
+	 * and auto jump in a single AdventureSettingsPacket instead.
+	 */
+	private function syncLegacyAdventureSettings(Player $for) : void{
+		$isOp = $for->hasPermission(DefaultPermissions::ROOT_OPERATOR);
+		$canInteract = !$for->isSpectator();
+
+		$pk = AdventureSettingsPacket::create(
+			0,
+			$isOp ? CommandPermissions::OPERATOR : CommandPermissions::NORMAL,
+			0,
+			$isOp ? PlayerPermissions::OPERATOR : PlayerPermissions::MEMBER,
+			0,
+			$for->getId()
+		);
+		$pk->setFlag(AdventureSettingsPacket::WORLD_IMMUTABLE, !$canInteract);
+		$pk->setFlag(AdventureSettingsPacket::NO_PVP, !$canInteract);
+		$pk->setFlag(AdventureSettingsPacket::AUTO_JUMP, $for->hasAutoJump());
+		$pk->setFlag(AdventureSettingsPacket::ALLOW_FLIGHT, $for->getAllowFlight());
+		$pk->setFlag(AdventureSettingsPacket::NO_CLIP, !$for->hasBlockCollision());
+		$pk->setFlag(AdventureSettingsPacket::FLYING, $for->isFlying());
+
+		$pk->setFlag(AdventureSettingsPacket::BUILD, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::MINE, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::DOORS_AND_SWITCHES, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::OPEN_CONTAINERS, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::ATTACK_PLAYERS, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::ATTACK_MOBS, $canInteract);
+		$pk->setFlag(AdventureSettingsPacket::OPERATOR, $isOp);
+		$pk->setFlag(AdventureSettingsPacket::TELEPORT, $for->hasPermission(DefaultPermissionNames::COMMAND_TELEPORT_SELF));
+
+		$this->sendDataPacket($pk);
 	}
 
 	public function syncAvailableCommands() : void{
