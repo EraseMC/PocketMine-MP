@@ -95,6 +95,10 @@ final class CreativeInventoryCache{
 		//creative inventory may have holes if items were unregistered - ensure network IDs used are always consistent
 		$items = [];
 		foreach($inventory->getAllEntries() as $k => $entry){
+			if($typeConverter->getItemTranslator()->toNetworkIdQuiet($entry->getItem()) === null){
+				//item did not exist yet in this (legacy) version; leave it out instead of showing a placeholder block
+				continue;
+			}
 			$items[] = new CreativeItemEntry(
 				$k,
 				$typeConverter->coreItemStackToNet($entry->getItem()),
