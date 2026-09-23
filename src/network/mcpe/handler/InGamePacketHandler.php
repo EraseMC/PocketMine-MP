@@ -504,6 +504,18 @@ class InGamePacketHandler extends PacketHandler{
 					$this->syncBlocksNearby($vBlockPos, $syncAdjacentFace);
 				}
 				return true;
+			case UseItemTransactionData::ACTION_BREAK_BLOCK:
+				//1.17 clients run without server-authoritative block breaking and have no PREDICT_DESTROY_BLOCK action;
+				//they report the destroyed block through this transaction instead
+				if($this->session->getProtocolId() > ProtocolInfo::PROTOCOL_1_17_40){
+					return false;
+				}
+				$blockPos = $data->getBlockPosition();
+				$vBlockPos = new Vector3($blockPos->getX(), $blockPos->getY(), $blockPos->getZ());
+				if(!$this->player->breakBlock($vBlockPos)){
+					$this->syncBlocksNearby($vBlockPos, null);
+				}
+				return true;
 			case UseItemTransactionData::ACTION_CLICK_AIR:
 				if($this->player->isUsingItem()){
 					if(!$this->player->consumeHeldItem()){
