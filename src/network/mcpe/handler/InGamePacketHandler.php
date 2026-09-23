@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\handler;
 
 use pocketmine\block\BaseSign;
+use pocketmine\block\ItemFrame;
 use pocketmine\block\Lectern;
 use pocketmine\block\tile\Sign;
 use pocketmine\block\utils\SignText;
@@ -31,6 +32,7 @@ use pocketmine\entity\Attribute;
 use pocketmine\entity\InvalidSkinException;
 use pocketmine\event\player\PlayerEditBookEvent;
 use pocketmine\inventory\transaction\action\DropItemAction;
+use pocketmine\inventory\transaction\CraftingTransaction;
 use pocketmine\inventory\transaction\InventoryTransaction;
 use pocketmine\inventory\transaction\TransactionBuilder;
 use pocketmine\inventory\transaction\TransactionCancelledException;
@@ -45,9 +47,12 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\network\FilterNoisyPacketException;
 use pocketmine\network\mcpe\convert\ItemTranslator;
+use pocketmine\network\mcpe\convert\TypeConversionException;
 use pocketmine\network\mcpe\InventoryManager;
+use pocketmine\network\mcpe\LegacyInventoryActionConverter;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
+use pocketmine\network\mcpe\protocol\ActorFallPacket;
 use pocketmine\network\mcpe\protocol\ActorPickRequestPacket;
 use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
@@ -60,6 +65,7 @@ use pocketmine\network\mcpe\protocol\CraftingEventPacket;
 use pocketmine\network\mcpe\protocol\EmotePacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
+use pocketmine\network\mcpe\protocol\ItemFrameDropItemPacket;
 use pocketmine\network\mcpe\protocol\ItemStackRequestPacket;
 use pocketmine\network\mcpe\protocol\ItemStackResponsePacket;
 use pocketmine\network\mcpe\protocol\LecternUpdatePacket;
@@ -156,6 +162,9 @@ class InGamePacketHandler extends PacketHandler{
 	public bool $forceMoveSync = false;
 
 	protected ?string $lastRequestedFullSkinId = null;
+
+	/** Craft being assembled from legacy transactions (clients before 1.16.100). */
+	private ?CraftingTransaction $legacyCraftingTransaction = null;
 
 	public function __construct(
 		private Player $player,
@@ -318,11 +327,22 @@ class InGamePacketHandler extends PacketHandler{
 			throw new PacketHandlingException("Too many slot sync requests in inventory transaction");
 		}
 
+		$isLegacyInventory = $this->session->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_100;
+		[$isCraftingPart, $isFinalCraftingPart] = $isLegacyInventory && $packet->trData instanceof NormalTransactionData ?
+			$this->classifyLegacyCraftingParts($packet->trData) :
+			[false, false];
+		//a craft is split over several transactions; its intermediate states must not be predicted or synced
+		$deferredCraftingPart = $isCraftingPart && !$isFinalCraftingPart;
+
 		$this->inventoryManager->setCurrentItemStackRequestId($packet->requestId);
-		$this->inventoryManager->addRawPredictedSlotChanges($packet->trData->getActions());
+		if(!$deferredCraftingPart){
+			$this->inventoryManager->addRawPredictedSlotChanges($packet->trData->getActions());
+		}
 
 		if($packet->trData instanceof NormalTransactionData){
-			$result = $this->handleNormalTransaction($packet->trData, $packet->requestId);
+			$result = $isLegacyInventory ?
+				$this->handleLegacyNormalTransaction($packet->trData, $packet->requestId, $isCraftingPart, $isFinalCraftingPart) :
+				$this->handleNormalTransaction($packet->trData, $packet->requestId);
 		}elseif($packet->trData instanceof MismatchTransactionData){
 			$this->session->getLogger()->debug("Mismatch transaction received");
 			$this->inventoryManager->requestSyncAll();
@@ -335,7 +355,9 @@ class InGamePacketHandler extends PacketHandler{
 			$result = $this->handleReleaseItemTransaction($packet->trData);
 		}
 
-		$this->inventoryManager->syncMismatchedPredictedSlotChanges();
+		if(!$deferredCraftingPart){
+			$this->inventoryManager->syncMismatchedPredictedSlotChanges();
+		}
 
 		//requestChangedSlots asks the server to always send out the contents of the specified slots, even if they
 		//haven't changed. Handling these is necessary to ensure the client inventory stays in sync if the server
@@ -380,6 +402,83 @@ class InGamePacketHandler extends PacketHandler{
 		}
 
 		return true;
+	}
+
+	/**
+	 * Clients before 1.16.100 have no ItemStackRequest, so every inventory interaction (moving items, creative
+	 * inventory, crafting) arrives as a normal transaction, not only item drops.
+	 */
+	private function handleLegacyNormalTransaction(NormalTransactionData $data, int $itemStackRequestId, bool $isCraftingPart, bool $isFinalCraftingPart) : bool{
+		$converter = new LegacyInventoryActionConverter($this->inventoryManager, $this->session->getTypeConverter());
+
+		$actions = [];
+		foreach($data->getActions() as $networkInventoryAction){
+			try{
+				$action = $converter->convert($networkInventoryAction);
+			}catch(TypeConversionException $e){
+				$this->session->getLogger()->debug("Invalid item in legacy inventory transaction: " . $e->getMessage());
+				return false;
+			}
+			if($action !== null){
+				$actions[] = $action;
+			}
+		}
+
+		if($isCraftingPart){
+			if($this->legacyCraftingTransaction === null){
+				$this->legacyCraftingTransaction = new CraftingTransaction($this->player, $this->player->getServer()->getCraftingManager(), $actions);
+			}else{
+				foreach($actions as $action){
+					$this->legacyCraftingTransaction->addAction($action);
+				}
+			}
+
+			if(!$isFinalCraftingPart){
+				return true;
+			}
+
+			$transaction = $this->legacyCraftingTransaction;
+			$this->legacyCraftingTransaction = null;
+			return $this->executeInventoryTransaction($transaction, $itemStackRequestId);
+		}
+
+		if($this->legacyCraftingTransaction !== null){
+			$this->session->getLogger()->debug("Got an unexpected normal inventory action with an incomplete crafting transaction, refusing to execute the craft");
+			$this->legacyCraftingTransaction = null;
+			$this->inventoryManager->requestSyncAll();
+			return false;
+		}
+
+		if(count($actions) === 0){
+			return true;
+		}
+
+		return $this->executeInventoryTransaction(new InventoryTransaction($this->player, $actions), $itemStackRequestId);
+	}
+
+	/**
+	 * Returns whether a legacy normal transaction is part of a craft, and whether it is the part which takes the
+	 * result (and so completes it).
+	 *
+	 * @return bool[]
+	 * @phpstan-return array{bool, bool}
+	 */
+	private function classifyLegacyCraftingParts(NormalTransactionData $data) : array{
+		$isCraftingPart = false;
+		$isFinalCraftingPart = false;
+		foreach($data->getActions() as $action){
+			if($action->sourceType === NetworkInventoryAction::SOURCE_TODO && (
+				$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT ||
+				$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
+			)){
+				$isCraftingPart = true;
+				if($action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT){
+					$isFinalCraftingPart = true;
+				}
+			}
+		}
+
+		return [$isCraftingPart, $isFinalCraftingPart];
 	}
 
 	private function handleNormalTransaction(NormalTransactionData $data, int $itemStackRequestId) : bool{
@@ -684,6 +783,24 @@ class InGamePacketHandler extends PacketHandler{
 
 	public function handleActorPickRequest(ActorPickRequestPacket $packet) : bool{
 		return $this->player->pickEntity($packet->actorUniqueId);
+	}
+
+	public function handleItemFrameDropItem(ItemFrameDropItemPacket $packet) : bool{
+		//legacy clients report hitting an item frame with this packet instead of a block action
+		$blockPosition = $packet->blockPosition;
+		$pos = new Vector3($blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ());
+		$block = $this->player->getWorld()->getBlock($pos);
+		if($block instanceof ItemFrame && $block->getFramedItem() !== null){
+			if(!$this->player->attackBlock($pos, $block->getFacing())){
+				$this->syncBlocksNearby($pos, null);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	public function handleActorFall(ActorFallPacket $packet) : bool{
+		return true; //fall damage is calculated by the server
 	}
 
 	public function handlePlayerAction(PlayerActionPacket $packet) : bool{

@@ -154,6 +154,7 @@ class NetworkSession{
 
 	private const INCOMING_GAME_PACKETS_PER_TICK = 2;
 	private const INCOMING_GAME_PACKETS_BUFFER_TICKS = 100;
+	private const LEGACY_INCOMING_PACKETS_PER_TICK = 16;
 
 	private const INCOMING_PACKET_BATCH_HARD_LIMIT = 300;
 
@@ -407,6 +408,12 @@ class NetworkSession{
 		$this->typeConverter = TypeConverter::getInstance($protocolId);
 		$this->broadcaster = $this->server->getPacketBroadcaster($protocolId);
 		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($this->broadcaster, $this->typeConverter);
+
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			//these clients send every inventory change as a separate transaction and do not batch as aggressively
+			$this->packetBatchLimiter = new PacketRateLimiter("Packet Batches", self::LEGACY_INCOMING_PACKETS_PER_TICK, self::INCOMING_PACKET_BATCH_BUFFER_TICKS);
+			$this->gamePacketLimiter = new PacketRateLimiter("Game Packets", self::LEGACY_INCOMING_PACKETS_PER_TICK, self::INCOMING_GAME_PACKETS_BUFFER_TICKS);
+		}
 	}
 
 	public function getProtocolId() : int{
@@ -1047,7 +1054,10 @@ class NetworkSession{
 				}
 				$this->sendDataPacket(ServerToClientHandshakePacket::create($handshakeJwt), true); //make sure this gets sent before encryption is enabled
 
-				$this->cipher = EncryptionContext::fakeGCM($encryptionKey);
+				//clients before 1.16.220 use AES-256-CFB8
+				$this->cipher = $this->protocolId >= ProtocolInfo::PROTOCOL_1_16_220 ?
+					EncryptionContext::fakeGCM($encryptionKey) :
+					EncryptionContext::cfb8($encryptionKey);
 
 				$this->setHandler(new HandshakePacketHandler($this->onServerLoginSuccess(...)));
 				$this->logger->debug("Enabled encryption");

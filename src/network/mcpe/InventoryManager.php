@@ -269,7 +269,8 @@ class InventoryManager{
 
 			//legacy transactions should not modify or predict anything other than these inventories, since these are
 			//the only ones accessible when not in-game (ItemStackRequest is used for everything else)
-			if(match($action->windowId){
+			//clients before 1.16.100 have no ItemStackRequest and use legacy transactions for every window
+			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100 && match($action->windowId){
 				ContainerIds::INVENTORY, ContainerIds::OFFHAND, ContainerIds::ARMOR => false,
 				default => true
 			}){
