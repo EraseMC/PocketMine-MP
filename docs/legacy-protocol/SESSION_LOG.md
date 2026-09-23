@@ -198,3 +198,4 @@
 - Owner confirmed 1.17.11 (448), 1.17.34 (465) and 1.17.41 (471) work after the 1.17.2 fixes; every stable 1.17 profile has now joined and played on a real client.
 - Removed the `ERASEMC_TEST_1_17_PROTOCOL` trial gate and the `ERASEMC_TRACE_1_17` stage/disconnect diagnostics (`RecentPacketTypes`). BedrockProtocol `123ffc5` admits 440/448/465/471 in `ACCEPTED_PROTOCOL`; core now depends on BedrockProtocol and BedrockData `dev-master`.
 - Released to PocketMine-MP `stable` and dependency `master` by fast-forward. The `feature/legacy-1.17` and `feature/legacy-1.18` branches are deleted after release. Core PHPUnit 201 tests and full PHPStan pass; BedrockProtocol PHPUnit 531 tests pass.
+- Removed the redundant `ERASEMC_TEST_1_18_PROTOCOL` gate: 1.18 profiles are admitted through `ACCEPTED_PROTOCOL`, and discovery advertises the current version. Only the `ERASEMC_TEST_1_19_*` gates remain for unreleased 1.19 profiles.

@@ -263,19 +263,11 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 
 	public function setName(string $name) : void{
 		$info = $this->server->getQueryInformation();
-		$test118ProtocolEnv = getenv('ERASEMC_TEST_1_18_PROTOCOL');
-		$test118Protocol = $test118ProtocolEnv === false ? 0 : (int) $test118ProtocolEnv;
-		$test118Version = match($test118Protocol){
-			ProtocolInfo::PROTOCOL_1_18_0 => '1.18.2',
-			ProtocolInfo::PROTOCOL_1_18_10 => '1.18.12',
-			ProtocolInfo::PROTOCOL_1_18_30 => '1.18.33',
-			default => null,
-		};
 		$test11910 = getenv('ERASEMC_TEST_1_19_10') === '1';
 		$test11922 = getenv('ERASEMC_TEST_1_19_22') === '1';
 		$test11931 = getenv('ERASEMC_TEST_1_19_31') === '1';
-		$advertisedProtocol = $test118Version !== null ? $test118Protocol : ($test11931 ? ProtocolInfo::PROTOCOL_1_19_30 : ($test11922 ? ProtocolInfo::PROTOCOL_1_19_21 : ($test11910 ? ProtocolInfo::PROTOCOL_1_19_10 : ProtocolInfo::CURRENT_PROTOCOL)));
-		$advertisedVersion = $test118Version ??($test11931 ? '1.19.31' : ($test11922 ? '1.19.22' : ($test11910 ? '1.19.10' : ProtocolInfo::MINECRAFT_VERSION_NETWORK)));
+		$advertisedProtocol = $test11931 ? ProtocolInfo::PROTOCOL_1_19_30 : ($test11922 ? ProtocolInfo::PROTOCOL_1_19_21 : ($test11910 ? ProtocolInfo::PROTOCOL_1_19_10 : ProtocolInfo::CURRENT_PROTOCOL));
+		$advertisedVersion = $test11931 ? '1.19.31' : ($test11922 ? '1.19.22' : ($test11910 ? '1.19.10' : ProtocolInfo::MINECRAFT_VERSION_NETWORK));
 
 		$this->interface->setName(implode(";",
 			[
