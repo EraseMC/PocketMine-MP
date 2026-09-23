@@ -65,6 +65,7 @@ use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\network\mcpe\raklib\RakLibInterface;
 use pocketmine\network\mcpe\StandardEntityEventBroadcaster;
 use pocketmine\network\mcpe\StandardPacketBroadcaster;
+use pocketmine\network\mcpe\VersionRestrictions;
 use pocketmine\network\Network;
 use pocketmine\network\NetworkInterfaceStartException;
 use pocketmine\network\query\DedicatedQueryNetworkInterface;
@@ -277,6 +278,7 @@ class Server{
 	private AuthKeyProvider $authKeyProvider;
 
 	private Network $network;
+	private VersionRestrictions $versionRestrictions;
 	private bool $networkCompressionAsync = true;
 	private int $networkCompressionAsyncThreshold = self::DEFAULT_ASYNC_COMPRESSION_THRESHOLD;
 
@@ -1050,6 +1052,9 @@ class Server{
 				(VersionInfo::IS_DEVELOPMENT_BUILD ? TextFormat::YELLOW : "") . $this->getPocketMineVersion() . TextFormat::RESET
 			)));
 			$this->logger->info($this->language->translate(KnownTranslationFactory::pocketmine_server_license($this->getName())));
+
+			$this->versionRestrictions = $this->loadVersionRestrictions();
+			$this->logger->info("Minecraft versions allowed to join: " . $this->versionRestrictions->describeAllowedVersions());
 
 			DefaultPermissions::registerCorePermissions();
 
@@ -1887,6 +1892,33 @@ class Server{
 	 */
 	public function getAuthKeyProvider() : AuthKeyProvider{
 		return $this->authKeyProvider;
+	}
+
+	/**
+	 * Returns which of the supported Minecraft versions may join, as configured in pocketmine.yml.
+	 */
+	public function getVersionRestrictions() : VersionRestrictions{
+		return $this->versionRestrictions;
+	}
+
+	private function loadVersionRestrictions() : VersionRestrictions{
+		$blockedVersions = $this->configGroup->getProperty(YmlServerProperties::MULTIVERSION_BLOCKED_VERSIONS, VersionRestrictions::DEFAULT_BLOCKED_VERSIONS);
+		if(!is_array($blockedVersions)){
+			$this->logger->warning("pocketmine.yml: multiversion.blocked-versions should be a list; blocking no versions");
+			$blockedVersions = [];
+		}
+		$warnings = [];
+		$restrictions = VersionRestrictions::create(
+			$this->configGroup->getPropertyString(YmlServerProperties::MULTIVERSION_MINIMUM_VERSION, ""),
+			$this->configGroup->getPropertyString(YmlServerProperties::MULTIVERSION_MAXIMUM_VERSION, ""),
+			$blockedVersions,
+			$this->configGroup->getPropertyString(YmlServerProperties::MULTIVERSION_KICK_MESSAGE, ""),
+			$warnings
+		);
+		foreach($warnings as $warning){
+			$this->logger->warning("pocketmine.yml multiversion: $warning (ignored)");
+		}
+		return $restrictions;
 	}
 
 	public function getNetwork() : Network{

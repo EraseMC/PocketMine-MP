@@ -242,7 +242,8 @@ class NetworkSession{
 		$this->setHandler(new SessionStartPacketHandler(
 			$this,
 			$this->onSessionStartSuccess(...),
-			$this->onLegacySessionStartSuccess(...)
+			$this->onLegacySessionStartSuccess(...),
+			$this->server->getVersionRestrictions()
 		));
 
 		$this->manager->add($this);

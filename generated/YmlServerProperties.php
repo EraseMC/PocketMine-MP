@@ -84,6 +84,11 @@ final class YmlServerProperties{
 	public const MEMORY_MAX_CHUNKS_CHUNK_RADIUS = 'memory.max-chunks.chunk-radius';
 	public const MEMORY_MEMORY_DUMP = 'memory.memory-dump';
 	public const MEMORY_MEMORY_DUMP_DUMP_ASYNC_WORKER = 'memory.memory-dump.dump-async-worker';
+	public const MULTIVERSION = 'multiversion';
+	public const MULTIVERSION_BLOCKED_VERSIONS = 'multiversion.blocked-versions';
+	public const MULTIVERSION_KICK_MESSAGE = 'multiversion.kick-message';
+	public const MULTIVERSION_MAXIMUM_VERSION = 'multiversion.maximum-version';
+	public const MULTIVERSION_MINIMUM_VERSION = 'multiversion.minimum-version';
 	public const NETWORK = 'network';
 	public const NETWORK_ASYNC_COMPRESSION = 'network.async-compression';
 	public const NETWORK_ASYNC_COMPRESSION_THRESHOLD = 'network.async-compression-threshold';

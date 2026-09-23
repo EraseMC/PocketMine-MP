@@ -29,6 +29,7 @@ use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\NetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
+use pocketmine\network\mcpe\VersionRestrictions;
 use function in_array;
 use function getenv;
 
@@ -41,7 +42,8 @@ final class SessionStartPacketHandler extends PacketHandler{
 	public function __construct(
 		private NetworkSession $session,
 		private \Closure $onSuccess,
-		private \Closure $onLegacySuccess
+		private \Closure $onLegacySuccess,
+		private VersionRestrictions $versionRestrictions
 	){}
 
 	public function handleRequestNetworkSettings(RequestNetworkSettingsPacket $packet) : bool{
@@ -52,6 +54,10 @@ final class SessionStartPacketHandler extends PacketHandler{
 			return true;
 		}
 		$this->session->setProtocolId($protocolVersion);
+		if($this->versionRestrictions->isBlocked($protocolVersion)){
+			$this->rejectRestrictedVersion($protocolVersion);
+			return true;
+		}
 
 		//TODO: we're filling in the defaults to get pre-1.19.30 behaviour back for now, but we should explore the new options in the future
 		$this->session->sendDataPacket(NetworkSettingsPacket::create(
@@ -76,8 +82,25 @@ final class SessionStartPacketHandler extends PacketHandler{
 			return true;
 		}
 		$this->session->setProtocolId($protocolVersion);
+		if($this->versionRestrictions->isBlocked($protocolVersion)){
+			$this->rejectRestrictedVersion($protocolVersion);
+			return true;
+		}
 		($this->onLegacySuccess)($packet);
 		return true;
+	}
+
+	/**
+	 * The version is supported, but pocketmine.yml does not allow it to join.
+	 */
+	private function rejectRestrictedVersion(int $protocolVersion) : void{
+		$this->session->getLogger()->debug("Protocol $protocolVersion is not allowed to join by pocketmine.yml multiversion settings");
+		$message = $this->versionRestrictions->getKickMessage();
+		if($message === ""){
+			$this->session->disconnectIncompatibleProtocol($protocolVersion);
+		}else{
+			$this->session->disconnect($message);
+		}
 	}
 
 	protected function isCompatibleProtocol(int $protocolVersion) : bool{
