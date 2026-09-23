@@ -31,8 +31,8 @@ use function str_repeat;
 
 final class VersionInfo{
 	public const NAME = "Erase-PocketMine-MP";
-	public const BASE_VERSION = "5.50.0";
-	public const IS_DEVELOPMENT_BUILD = false;
+	public const BASE_VERSION = "5.50.1";
+	public const IS_DEVELOPMENT_BUILD = true;
 	public const BUILD_CHANNEL = "stable";
 	public const GITHUB_URL = "https://github.com/EraseMC/PocketMine-MP";
 
