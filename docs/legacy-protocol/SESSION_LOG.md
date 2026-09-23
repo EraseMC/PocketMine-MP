@@ -215,3 +215,9 @@
 - Offline checks: every 1.16 profile loads, round-trips representative items and all common blocks, and encodes/decodes crafting data (1827 recipes) and creative content without trailing bytes. Essential's chunk "extraData" varint for <1.16.100 and its MoveActorDelta cast were not adopted (PMMP 1.16.20 sent no extraData; the core only uses MoveActorAbsolute).
 - No real 1.16 client has joined yet. Test with `ERASEMC_TEST_1_16_PROTOCOL=<protocol>`.
 - Owner confirmed a real 1.16.100 client (protocol 419) works on the localhost trial server: join, terrain, block breaking/placing, inventory and containers, creative inventory, crafting, commands/flight and item frames. The owner has no other 1.16 client; 407, 408, 422, 428 and 431 remain without live tests.
+
+## 2026-09-24 - 1.16 release and version restrictions
+
+- Added the `multiversion` section of `pocketmine.yml` (minimum/maximum version, blocked versions by version, release line or protocol number, optional kick message), implemented by `VersionRestrictions`. It only narrows `ACCEPTED_PROTOCOL`; opt-in trial gates are unaffected. The resolved allowed versions are logged at startup.
+- At the owner's request all six 1.16 profiles are admitted (BedrockProtocol `e931ab2`), with the five untested profiles (407, 408, 422, 428, 431) blocked by the default configuration so that only 1.16.100/1.16.101 may join. Removed the `ERASEMC_TEST_1_16_PROTOCOL` gate; core depends on BedrockProtocol and BedrockData `dev-master` again.
+- Renamed the core to Erase-PocketMine-MP and released 5.50.0.

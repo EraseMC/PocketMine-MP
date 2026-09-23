@@ -20,7 +20,7 @@ This directory is the durable technical memory for Erase-PocketMine-MP legacy-pr
 
 ## Scope policy
 
-The 1.17.x and 1.18.x lines are released; the 1.19 line remains documented in `1.19.md`. Preview/beta builds are tracked separately and are not implied by stable-release support.
+The 1.16.x, 1.17.x and 1.18.x lines are released; the 1.19 line remains documented in `1.19.md`. Preview/beta builds are tracked separately and are not implied by stable-release support.
 
 ## Ownership
 
