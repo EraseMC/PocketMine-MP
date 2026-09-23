@@ -199,3 +199,9 @@
 - Removed the `ERASEMC_TEST_1_17_PROTOCOL` trial gate and the `ERASEMC_TRACE_1_17` stage/disconnect diagnostics (`RecentPacketTypes`). BedrockProtocol `123ffc5` admits 440/448/465/471 in `ACCEPTED_PROTOCOL`; core now depends on BedrockProtocol and BedrockData `dev-master`.
 - Released to PocketMine-MP `stable` and dependency `master` by fast-forward. The `feature/legacy-1.17` and `feature/legacy-1.18` branches are deleted after release. Core PHPUnit 201 tests and full PHPStan pass; BedrockProtocol PHPUnit 531 tests pass.
 - Removed the redundant `ERASEMC_TEST_1_18_PROTOCOL` gate: 1.18 profiles are admitted through `ACCEPTED_PROTOCOL`, and discovery advertises the current version. Only the `ERASEMC_TEST_1_19_*` gates remain for unreleased 1.19 profiles.
+
+## 2026-09-24 - Minecraft 1.16 implementation started
+
+- Created `feature/legacy-1.16` in PocketMine-MP, BedrockProtocol and BedrockData from the current release branches. Stable profiles: 407 (1.16.0-1.16.10), 408 (1.16.20-1.16.40), 419 (1.16.100/101), 422 (1.16.200/201), 428 (1.16.210), 431 (1.16.220/221).
+- Historical data located: PMMP BedrockData commits `43edcfd`, `afc885c`, `14f4a76`, `4e58a3c`, `989e02a`, `f31a33c^`. Where they overlap with the Flonja multi-version snapshot `7f4684b` the files are byte-identical. The 1.16.100 and 1.16.200 palettes are identical, as are 1.16.210 and 1.16.220; 1.16.0/1.16.20 palettes are the server-sent `required_block_states.nbt` lists.
+- Block-state meta maps are indexed by palette position. The 1.17 profiles currently borrow the 1.19.10 map, whose indices do not correspond to the 1.17 palettes; for 1.16 (legacy-damage block items) accurate generated maps are required. See `1.16.md` for the plan.
