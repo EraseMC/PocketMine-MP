@@ -103,6 +103,7 @@ use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
+use pocketmine\network\mcpe\diagnostic\RecentPacketTypes;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\network\mcpe\protocol\UpdateAdventureSettingsPacket;
 use pocketmine\network\NetworkSessionManager;
@@ -196,6 +197,9 @@ class NetworkSession{
 	private bool $forceAsyncCompression = true;
 	private ?int $protocolId = null;
 	private int $legacy117ChunkSendCount = 0;
+	private int $legacy117SentBatches = 0;
+	private ?RecentPacketTypes $legacy117PacketTypes = null;
+	private string $legacy117LastStage = 'session opened';
 	protected bool $enableCompression = false; //disabled until handshake completed
 
 	private int $nextAckReceiptId = 0;
@@ -256,11 +260,30 @@ class NetworkSession{
 		return $this->logger;
 	}
 
-	/** Safe stage-only trace for the local 1.17.2 trial; never logs packet payloads or credentials. */
+	private function legacy117TraceEnabled() : bool{
+		return in_array($this->protocolId, [
+			ProtocolInfo::PROTOCOL_1_17_0,
+			ProtocolInfo::PROTOCOL_1_17_10,
+			ProtocolInfo::PROTOCOL_1_17_30,
+			ProtocolInfo::PROTOCOL_1_17_40,
+		], true) && getenv('ERASEMC_TRACE_1_17') === '1';
+	}
+
+	/** Payload-free stage trace for a local 1.17 trial. */
 	public function traceLegacy117(string $stage) : void{
-		if($this->protocolId === ProtocolInfo::PROTOCOL_1_17_0 && getenv('ERASEMC_TRACE_1_17') === '1'){
+		if($this->legacy117TraceEnabled()){
+			$this->legacy117LastStage = $stage;
 			$this->logger->info("[1.17 trace] " . $stage);
 		}
+	}
+
+	private function dumpLegacy117PacketTrace() : void{
+		if(!$this->legacy117TraceEnabled()){
+			return;
+		}
+		$packets = $this->legacy117PacketTypes ?? new RecentPacketTypes();
+		$this->logger->info("[1.17 diag] protocol={$this->protocolId}; handler=" . ($this->handler === null ? 'none' : get_class($this->handler)) . "; stage={$this->legacy117LastStage}; age=" . (time() - $this->connectTime) . "s; chunksQueued={$this->legacy117ChunkSendCount}; batchesHandedToRakLib={$this->legacy117SentBatches}; compressedPending=" . $this->compressedQueue->count() . "; gamePacketsPending=" . count($this->sendBuffer) . "; incoming=" . $packets->getInboundCount() . "; outgoing=" . $packets->getOutboundCount());
+		$this->logger->info('[1.17 diag] recent packet types (queued/processed, not proof of client receipt or crash cause): ' . $packets->formatRecent());
 	}
 
 	private function onSessionStartSuccess() : void{
@@ -555,6 +578,9 @@ class NetworkSession{
 		if(!($packet instanceof ServerboundPacket)){
 			throw new PacketHandlingException("Unexpected non-serverbound packet");
 		}
+		if($this->legacy117TraceEnabled()){
+			($this->legacy117PacketTypes ??= new RecentPacketTypes())->recordInbound($packet->getName());
+		}
 
 		$timings = Timings::getReceiveDataPacketTimings($packet);
 		$timings->startTiming();
@@ -673,6 +699,9 @@ class NetworkSession{
 			foreach($packets as $evPacket){
 				$writer->clear(); //memory reuse let's gooooo
 				$this->addToSendBuffer(self::encodePacketTimed($writer, $this->getProtocolId(), $evPacket));
+				if($this->legacy117TraceEnabled()){
+					($this->legacy117PacketTypes ??= new RecentPacketTypes())->recordOutbound($evPacket->getName());
+				}
 			}
 			if($immediate){
 				$this->flushGamePacketQueue();
@@ -839,6 +868,9 @@ class NetworkSession{
 			$ackReceiptId = null;
 		}
 		$this->sender->send($payload, $immediate, $ackReceiptId);
+		if($this->legacy117TraceEnabled()){
+			++$this->legacy117SentBatches;
+		}
 	}
 
 	/**
@@ -847,6 +879,7 @@ class NetworkSession{
 	private function tryDisconnect(\Closure $func, Translatable|string $reason) : void{
 		if($this->connected && !$this->disconnectGuard){
 			$this->disconnectGuard = true;
+			$this->dumpLegacy117PacketTrace();
 			$func();
 
 			$event = new SessionDisconnectEvent($this);
@@ -1338,6 +1371,9 @@ class NetworkSession{
 		try{
 			$this->queueCompressed($chunkPacket);
 			++$this->legacy117ChunkSendCount;
+			if($this->legacy117TraceEnabled()){
+				($this->legacy117PacketTypes ??= new RecentPacketTypes())->recordOutbound('LevelChunkPacket');
+			}
 			if(in_array($this->legacy117ChunkSendCount, [1, 8, 32, 64, 128, 224], true)){
 				$this->traceLegacy117("queued {$this->legacy117ChunkSendCount} chunks; latest=($chunkX,$chunkZ)");
 			}
