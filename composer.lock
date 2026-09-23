@@ -256,13 +256,13 @@
             "version": "dev-feature/legacy-1.17",
             "source": {
                 "type": "git",
-                "url": "git@github.com:EraseMC/BedrockProtocol.git",
-                "reference": "87f11d5e612b6c3f4b9cc0ed41e045a75919f172"
+                "url": "https://github.com/EraseMC/BedrockProtocol.git",
+                "reference": "ecd044a5afd571832a57240b2ebe2ca6d9edcc0b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/87f11d5e612b6c3f4b9cc0ed41e045a75919f172",
-                "reference": "87f11d5e612b6c3f4b9cc0ed41e045a75919f172",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/ecd044a5afd571832a57240b2ebe2ca6d9edcc0b",
+                "reference": "ecd044a5afd571832a57240b2ebe2ca6d9edcc0b",
                 "shasum": ""
             },
             "require": {
@@ -313,7 +313,7 @@
                 "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
                 "source": "https://github.com/EraseMC/BedrockProtocol"
             },
-            "time": "2026-09-23T19:15:06+00:00"
+            "time": "2026-09-23T19:25:27+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
