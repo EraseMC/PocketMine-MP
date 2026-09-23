@@ -115,7 +115,13 @@ class PreSpawnPacketHandler extends PacketHandler{
 				$this->server->getMotd(),
 				"",
 				false,
-				new PlayerMovementSettings(ServerAuthMovementMode::SERVER_AUTHORITATIVE_V3, 0, true),
+				// Wire value 2 means rewind-based movement to 1.17 clients, not the
+				// modern V3 mode. Use value 1 so they send PlayerAuthInputPacket.
+				new PlayerMovementSettings(
+					$protocolId <= ProtocolInfo::PROTOCOL_1_17_40 ? ServerAuthMovementMode::SERVER_AUTHORITATIVE_V2 : ServerAuthMovementMode::SERVER_AUTHORITATIVE_V3,
+					0,
+					$protocolId > ProtocolInfo::PROTOCOL_1_17_40
+				),
 				0,
 				0,
 				"",
