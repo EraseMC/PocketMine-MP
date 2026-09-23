@@ -30,6 +30,8 @@ Nukkit-MOT is a Java implementation under a different architecture. It is used a
 
 ## Preserved PocketMine history in this fork
 
+For 1.17, the local PocketMine-MP commits `57d274901` (1.17.0), `8b79253d3` (1.17.10), `8e2d06a88` (zero-bit chunk palette boundary) and `c4446ca28` (1.17.40) establish the wire and terrain differences. BedrockProtocol commits `faff7da` and `ea9e225` define the 1.17.30 and 1.17.40 packet changes; `040a883` defines the 1.18.0 boundary to avoid sending newer fields to 1.17. BedrockData tree `657395e^` and commit `f29b7be` contain the immutable 1.17 block/item snapshots. Missing versioned block-item, block-meta and tag maps are explicitly tracked in `1.17.md`.
+
 | Repository | Commit | Relevance |
 | --- | --- | --- |
 | `PocketMine-MP` | `1579e5b8e39475963fb68deb0df9970d0ffbfe0f` | Initial 1.19.0 compatibility work. |

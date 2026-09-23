@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58558366f4d31a9f0825d226e8c47a4e",
+    "content-hash": "d366fe8bfeb532ca22936f8b6b286728",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -221,19 +221,18 @@
         },
         {
             "name": "erasemc/bedrock-data",
-            "version": "dev-master",
+            "version": "dev-feature/legacy-1.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockData.git",
-                "reference": "7f7e86c40b9c4fb05d0df75395c35c9f6ddae7fd"
+                "reference": "3b9d00463226292f367e8820d0a659e700a9b3a0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockData/zipball/7f7e86c40b9c4fb05d0df75395c35c9f6ddae7fd",
-                "reference": "7f7e86c40b9c4fb05d0df75395c35c9f6ddae7fd",
+                "url": "https://api.github.com/repos/EraseMC/BedrockData/zipball/3b9d00463226292f367e8820d0a659e700a9b3a0",
+                "reference": "3b9d00463226292f367e8820d0a659e700a9b3a0",
                 "shasum": ""
             },
-            "default-branch": true,
             "type": "library",
             "license": [
                 "CC0-1.0"
@@ -250,20 +249,20 @@
                 "issues": "https://github.com/EraseMC/BedrockData/issues",
                 "source": "https://github.com/EraseMC/BedrockData"
             },
-            "time": "2026-09-21T16:08:55+00:00"
+            "time": "2026-09-23T18:42:01+00:00"
         },
         {
             "name": "erasemc/bedrock-protocol",
-            "version": "dev-master",
+            "version": "dev-feature/legacy-1.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockProtocol.git",
-                "reference": "f939fcdbbbc7f6b29a157494edb6a5ab4b3f59ea"
+                "reference": "ebc65f89bf530ab3cf753253cb3619a23f075ab2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/f939fcdbbbc7f6b29a157494edb6a5ab4b3f59ea",
-                "reference": "f939fcdbbbc7f6b29a157494edb6a5ab4b3f59ea",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/ebc65f89bf530ab3cf753253cb3619a23f075ab2",
+                "reference": "ebc65f89bf530ab3cf753253cb3619a23f075ab2",
                 "shasum": ""
             },
             "require": {
@@ -282,7 +281,6 @@
                 "phpstan/phpstan-strict-rules": "^2.0.0",
                 "phpunit/phpunit": "^9.5 || ^10.0 || ^11.0"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -315,7 +313,7 @@
                 "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
                 "source": "https://github.com/EraseMC/BedrockProtocol"
             },
-            "time": "2026-09-22T15:18:59+00:00"
+            "time": "2026-09-23T18:57:23+00:00"
         },
         {
             "name": "netresearch/jsonmapper",

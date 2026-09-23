@@ -159,3 +159,12 @@
 - User confirmed the restarted 1.18.2 client works after the `PlayerActionPacket` fix. Confirmed scope so far: login, world join, movement and a block-breaking attempt without the prior disconnect. Inventory, crafting, entity interaction, reconnect and broader gameplay remain unverified; protocols 486 and 503 still need their own live trials.
 - User confirmed 1.18.12 (protocol 486) works after joining the localhost test server. The server log confirms login and world join without a disconnect at the time of this note. The requested gameplay checklist is user-reported as working; protocol 503 and release-gate breadth remain unverified, so a full 1.18 stable promotion is not yet justified.
 - The owner subsequently requested stable promotion despite the untested protocol 503 and incomplete gameplay checklist, noting that no players currently use that profile. Release work therefore admits 475/486/503 while retaining an explicit verification caveat in `1.18.md`.
+
+## 2026-09-23 — 1.17 implementation in progress
+
+- Created `feature/legacy-1.17` in all three repositories from current release branches. Preserved user-owned local edits to `src/VersionInfo.php` and `start.cmd` without staging them.
+- Reviewed Opus 5.5 commits: core `24321b9cf` keeps rootless legacy chains unauthenticated; core `1cf5dffc5` updates protocol dependency; BedrockProtocol `f939fcd` clamps 1.18 sound IDs. Do not regress them.
+- Stable profiles: 440 (1.17.0–1.17.2), 448 (1.17.10–1.17.11), 465 (1.17.30–1.17.34), 471 (1.17.40–1.17.41). User plans to install 1.17.2, 1.17.11, 1.17.34, 1.17.41 for live trials.
+- BedrockData commit `3b9d004` restores historical 1.17 block/item snapshots; protocol commits `c5da675` and `ebc65f8` restore IDs, wire-layout boundaries, optional early skin field and 1.17 sound limit. Core pins these feature branches, restores chunk and data paths, and adds a single-profile opt-in `ERASEMC_TEST_1_17_PROTOCOL` gate.
+- Automated checks to date: BedrockProtocol 526 PHPUnit tests, 1022 assertions; core initial suite 197 tests, 96232 assertions and targeted 1.17 data/chunk tests pass. Core PHPStan is green. BedrockProtocol PHPStan reports 16 pre-existing errors in unrelated source/tests; no new 1.17 errors.
+- Not release-ready: real-client tests pending; historical block-item, block-meta and tag maps are unavailable and currently fall back to newer data. Validate rendering, recipes and interactions before admitting 1.17 into `ACCEPTED_PROTOCOL` or merging to stable.

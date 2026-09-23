@@ -4,7 +4,7 @@ This directory is the durable technical memory for EraseMC Core legacy-protocol 
 
 ## Reading order for a new session
 
-1. Read [`1.18.md`](1.18.md) and [`1.19.md`](1.19.md) for client matrices and implementation status.
+1. Read [`1.17.md`](1.17.md), [`1.18.md`](1.18.md) and [`1.19.md`](1.19.md) for client matrices and implementation status.
 2. Read [`DECISIONS.md`](DECISIONS.md) before changing the login, transport, serialization, data-translation, or chunk paths.
 3. Read [`SOURCES.md`](SOURCES.md) before adding a protocol boundary; it records the authoritative and corroborating evidence used here.
 4. Read the newest entry in [`SESSION_LOG.md`](SESSION_LOG.md), then update it in the same change set as substantive work.
@@ -20,10 +20,10 @@ This directory is the durable technical memory for EraseMC Core legacy-protocol 
 
 ## Scope policy
 
-The 1.19 line remains documented in `1.19.md`; the current legacy release is 1.18.x. Preview/beta builds are tracked separately and are not implied by stable-release support.
+The 1.19 and 1.18 lines remain documented in their respective files; the current development target is 1.17.x. Preview/beta builds are tracked separately and are not implied by stable-release support.
 
 ## Ownership
 
-- Work branch: `feature/legacy-1.18` in `PocketMine-MP`, `BedrockProtocol`, and `BedrockData`.
-- Integration target: PocketMine-MP `stable` and dependency `master` branches on explicit owner release request. See `1.18.md` for the owner-approved unverified protocol 503 exception.
+- Work branch: `feature/legacy-1.17` in `PocketMine-MP`, `BedrockProtocol`, and `BedrockData`.
+- Integration target: PocketMine-MP `stable` and dependency `master` branches only after client validation and explicit owner release request. See `1.18.md` for the earlier owner-approved unverified protocol 503 exception.
 - Persistent owner: EraseMC.

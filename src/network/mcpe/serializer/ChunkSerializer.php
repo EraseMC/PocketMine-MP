@@ -43,6 +43,7 @@ use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
 use function count;
 use function get_class;
+use function str_repeat;
 
 final class ChunkSerializer{
 	private function __construct(){
@@ -57,9 +58,9 @@ final class ChunkSerializer{
 	 * @return int[]
 	 * @phpstan-return array{int, int}
 	 */
-	public static function getDimensionChunkBounds(int $dimensionId) : array{
+	public static function getDimensionChunkBounds(int $dimensionId, int $protocolId) : array{
 		return match($dimensionId){
-			DimensionIds::OVERWORLD => [-4, 19],
+			DimensionIds::OVERWORLD => $protocolId < ProtocolInfo::PROTOCOL_1_18_0 ? [0, 15] : [-4, 19],
 			DimensionIds::NETHER => [0, 7],
 			DimensionIds::THE_END => [0, 15],
 			default => throw new \InvalidArgumentException("Unknown dimension ID $dimensionId"),
@@ -72,10 +73,10 @@ final class ChunkSerializer{
 	 *
 	 * @phpstan-param DimensionIds::* $dimensionId
 	 */
-	public static function getSubChunkCount(Chunk $chunk, int $dimensionId) : int{
+	public static function getSubChunkCount(Chunk $chunk, int $dimensionId, int $protocolId) : int{
 		//if the protocol world bounds ever exceed the PM supported bounds again in the future, we might need to
 		//polyfill some stuff here
-		[$minSubChunkIndex, $maxSubChunkIndex] = self::getDimensionChunkBounds($dimensionId);
+		[$minSubChunkIndex, $maxSubChunkIndex] = self::getDimensionChunkBounds($dimensionId, $protocolId);
 		for($y = $maxSubChunkIndex, $count = $maxSubChunkIndex - $minSubChunkIndex + 1; $y >= $minSubChunkIndex; --$y, --$count){
 			if($chunk->getSubChunk($y)->isEmptyFast()){
 				continue;
@@ -94,13 +95,14 @@ final class ChunkSerializer{
 		$stream = new ByteBufferWriter();
 		$subChunks = [];
 
-		$subChunkCount = self::getSubChunkCount($chunk, $dimensionId);
+		$protocolId = $typeConverter->getProtocolId();
+		$subChunkCount = self::getSubChunkCount($chunk, $dimensionId, $protocolId);
 		$writtenCount = 0;
 
-		[$minSubChunkIndex, ] = self::getDimensionChunkBounds($dimensionId);
+		[$minSubChunkIndex, ] = self::getDimensionChunkBounds($dimensionId, $protocolId);
 		for($y = $minSubChunkIndex; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			$stream->clear();
-			self::serializeSubChunk($chunk->getSubChunk($y), $typeConverter->getBlockTranslator(), $stream, false);
+			self::serializeSubChunk($chunk->getSubChunk($y), $typeConverter->getBlockTranslator(), $stream, false, $protocolId);
 			$subChunks[] = $stream->getData();
 		}
 
@@ -117,7 +119,7 @@ final class ChunkSerializer{
 			$stream->writeByteArray($subChunk);
 		}
 
-		self::serializeBiomes($chunk, $dimensionId, $stream);
+		self::serializeBiomes($chunk, $dimensionId, $typeConverter->getProtocolId(), $stream);
 		self::serializeChunkData($chunk, $stream, $typeConverter, $tiles);
 
 		return $stream->getData();
@@ -126,8 +128,17 @@ final class ChunkSerializer{
 	/**
 	 * @phpstan-param DimensionIds::* $dimensionId
 	 */
-	public static function serializeBiomes(Chunk $chunk, int $dimensionId, ByteBufferWriter $stream) : void{
-		[$minSubChunkIndex, $maxSubChunkIndex] = self::getDimensionChunkBounds($dimensionId);
+	public static function serializeBiomes(Chunk $chunk, int $dimensionId, int $protocolId, ByteBufferWriter $stream) : void{
+		if($protocolId < ProtocolInfo::PROTOCOL_1_18_0){
+			// 1.17 uses one 16x16 biome byte array for the entire column, in Z-major order.
+			for($z = 0; $z < 16; ++$z){
+				for($x = 0; $x < 16; ++$x){
+					Byte::writeUnsigned($stream, $chunk->getBiomeId($x, 64, $z));
+				}
+			}
+			return;
+		}
+		[$minSubChunkIndex, $maxSubChunkIndex] = self::getDimensionChunkBounds($dimensionId, $protocolId);
 		$biomeIdMap = LegacyBiomeIdToStringIdMap::getInstance();
 		//all biomes must always be written :(
 		for($y = $minSubChunkIndex; $y <= $maxSubChunkIndex; ++$y){
@@ -150,7 +161,7 @@ final class ChunkSerializer{
 		}
 	}
 
-	public static function serializeSubChunk(SubChunk $subChunk, BlockTranslator $blockTranslator, ByteBufferWriter $stream, bool $persistentBlockStates) : void{
+	public static function serializeSubChunk(SubChunk $subChunk, BlockTranslator $blockTranslator, ByteBufferWriter $stream, bool $persistentBlockStates, int $protocolId) : void{
 		$layers = $subChunk->getBlockLayers();
 		Byte::writeUnsigned($stream, 8); //version
 
@@ -160,7 +171,13 @@ final class ChunkSerializer{
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
-			$words = $blocks->getWordArray();
+			if($protocolId < ProtocolInfo::PROTOCOL_1_17_30 && $bitsPerBlock === 0){
+				// Zero-bit palettes were introduced in 1.17.30.
+				$bitsPerBlock = 1;
+				$words = str_repeat("\x00", PalettedBlockArray::getExpectedWordArraySize(1));
+			}else{
+				$words = $blocks->getWordArray();
+			}
 			Byte::writeUnsigned($stream, ($bitsPerBlock << 1) | ($persistentBlockStates ? 0 : 1));
 			$stream->writeByteArray($words);
 			$palette = $blocks->getPalette();

@@ -93,6 +93,12 @@ final class ItemTagToIdMap{
 		ProtocolInfo::PROTOCOL_1_18_30 => "-1.20.0",
 		ProtocolInfo::PROTOCOL_1_18_10 => "-1.20.0",
 		ProtocolInfo::PROTOCOL_1_18_0 => "-1.20.0",
+		// BedrockData has no historical 1.17 tag snapshot; keep the same
+		// recipe downgrade fallback as the existing 1.18 profiles.
+		ProtocolInfo::PROTOCOL_1_17_40 => "-1.20.0",
+		ProtocolInfo::PROTOCOL_1_17_30 => "-1.20.0",
+		ProtocolInfo::PROTOCOL_1_17_10 => "-1.20.0",
+		ProtocolInfo::PROTOCOL_1_17_0 => "-1.20.0",
 	];
 
 	private static function make(int $protocolId) : self{

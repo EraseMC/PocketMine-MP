@@ -15,6 +15,20 @@ use PHPUnit\Framework\TestCase;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 
 final class LegacyBlockItemMapTest extends TestCase{
+	public function testMinecraft1_17ProfilesLoadTheirDataSnapshots() : void{
+		foreach([
+			ProtocolInfo::PROTOCOL_1_17_0,
+			ProtocolInfo::PROTOCOL_1_17_10,
+			ProtocolInfo::PROTOCOL_1_17_30,
+			ProtocolInfo::PROTOCOL_1_17_40,
+		] as $protocolId){
+			self::assertNotEmpty(BlockTranslator::loadFromProtocolId($protocolId)->getBlockStateDictionary()->getStates());
+			self::assertNotEmpty(ItemTypeDictionaryFromDataHelper::loadFromProtocolId($protocolId)->getEntries());
+			self::assertSame('minecraft:item.acacia_door', BlockItemIdMapFromDataHelper::loadFromProtocolId($protocolId)->lookupItemId('minecraft:acacia_door'));
+			self::assertNotEmpty(TypeConverter::getInstance($protocolId)->getItemTypeDictionary()->getEntries());
+		}
+	}
+
 	public function testMinecraft1_18ProfilesLoadTheirDataSnapshots() : void{
 		foreach([
 			ProtocolInfo::PROTOCOL_1_18_0,

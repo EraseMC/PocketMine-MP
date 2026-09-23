@@ -91,6 +91,10 @@ final class ItemTypeDictionaryFromDataHelper{
 		ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
 		ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
 		ProtocolInfo::PROTOCOL_1_18_0 => "-1.18.0",
+		ProtocolInfo::PROTOCOL_1_17_40 => "-1.17.40",
+		ProtocolInfo::PROTOCOL_1_17_30 => "-1.17.30",
+		ProtocolInfo::PROTOCOL_1_17_10 => "-1.17.10",
+		ProtocolInfo::PROTOCOL_1_17_0 => "-1.17.0",
 	];
 
 	public static function loadFromProtocolId(int $protocolId) : ItemTypeDictionary{
