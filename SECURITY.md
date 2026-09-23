@@ -11,12 +11,12 @@ Send a _**private security report**_ by going to https://github.com/EraseMC/Pock
 > 
 > The issue tracker is public to view, which means that malicious actors may learn about exploits from a public issue.
 >
-> **You may put live EraseMC Core servers at risk by reporting a vulnerability on the GitHub issue tracker.**
+> **You may put live Erase-PocketMine-MP servers at risk by reporting a vulnerability on the GitHub issue tracker.**
 
 If private vulnerability reporting is unavailable for this repository, contact the EraseMC organization owners through GitHub before disclosing details publicly.
 Include the following information:
 
-- Version of EraseMC Core
+- Version of Erase-PocketMine-MP
 - Detailed description of the vulnerability (e.g. how to exploit it, what the effects are)
 - Your GitHub username, if you wish to be credited for reporting the problem in the security advisory
 

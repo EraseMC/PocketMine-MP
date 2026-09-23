@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a feature of EraseMC Core not working as expected
+description: Report a feature of Erase-PocketMine-MP not working as expected
 body:
   - type: markdown
     attributes:
@@ -8,7 +8,7 @@ body:
 
         > [!IMPORTANT]
         > It's strongly recommended to test for bugs without plugins before reporting an issue.
-        > This helps avoid wasting maintainers' time on bugs that are not actually caused by EraseMC Core.
+        > This helps avoid wasting maintainers' time on bugs that are not actually caused by Erase-PocketMine-MP.
         >
         > If you're not sure whether a plugin might be causing your issue, describe what you tested in the issue below.
 
@@ -70,8 +70,8 @@ body:
 
   - type: input
     attributes:
-      label: EraseMC Core version
-      placeholder: Use the /version command in EraseMC Core
+      label: Erase-PocketMine-MP version
+      placeholder: Use the /version command in Erase-PocketMine-MP
     validations:
       required: true
   - type: input

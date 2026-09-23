@@ -1,5 +1,5 @@
 name: Crash
-description: Report a crash in EraseMC Core (not plugins)
+description: Report a crash in Erase-PocketMine-MP (not plugins)
 title: Server crashed
 body:
   - type: markdown

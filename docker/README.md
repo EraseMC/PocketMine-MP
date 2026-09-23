@@ -1,4 +1,4 @@
-# EraseMC Core Docker image
+# Erase-PocketMine-MP Docker image
 This folder contains the files used to build and test the `ghcr.io/erasemc/pocketmine-mp` Docker image.
 
 Docker is an easy, safe way to run software in a container where it can't affect anything else on your machine.
@@ -7,7 +7,7 @@ You don't need to build any dependencies, and updating is as simple as changing 
 ## Pre-requisites
 To install Docker, refer to the [official Docker docs](https://docs.docker.com/engine/install/).
 
-## Running EraseMC Core from Docker (using GitHub Container Registry)
+## Running Erase-PocketMine-MP from Docker (using GitHub Container Registry)
 This is really easy once you have `docker` installed.
 
 ```
@@ -80,7 +80,7 @@ Change `--tail=100` to the number of recent lines in the log you want to see.
 
 ## Adding plugins from Poggit
 If the `$POCKETMINE_PLUGINS` is set, the container will auto-download the plugins specified from https://poggit.pmmp.io
-before starting EraseMC Core.
+before starting Erase-PocketMine-MP.
 
 The list of plugins should be given in the format `PluginOne:1.2.3 PluginTwo:4.5.6`. The version part (`:4.5.6`) is optional.
 
@@ -89,9 +89,9 @@ The list of plugins should be given in the format `PluginOne:1.2.3 PluginTwo:4.5
 > If you need to update a plugin, you'll need to delete the old plugin `.phar` first.
 
 ## Volumes
-- `/data` is a read-write data directory where EraseMC Core stores all data in.
+- `/data` is a read-write data directory where Erase-PocketMine-MP stores all data in.
 	This includes server config files, player data, worlds and plugin config files/data.
-- `/plugins` is a read-only data directory where EraseMC Core loads plugins from.
+- `/plugins` is a read-only data directory where Erase-PocketMine-MP loads plugins from.
 
 ## Advanced usage: Passing args to PocketMine-MP.phar inside the container
 The `POCKETMINE_ARGS` environment variable will be passed to `PocketMine-MP.phar` when run.

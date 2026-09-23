@@ -1,6 +1,6 @@
 # Legacy protocol engineering notes
 
-This directory is the durable technical memory for EraseMC Core legacy-protocol work. It is intentionally committed with the implementation so that a new development session can recover the exact scope, decisions, evidence, and outstanding verification work without relying on chat history.
+This directory is the durable technical memory for Erase-PocketMine-MP legacy-protocol work. It is intentionally committed with the implementation so that a new development session can recover the exact scope, decisions, evidence, and outstanding verification work without relying on chat history.
 
 ## Reading order for a new session
 

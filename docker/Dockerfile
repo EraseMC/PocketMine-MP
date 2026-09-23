@@ -34,7 +34,7 @@ RUN php -dphar.readonly=0 ./build/server-phar.php --git ${GIT_HASH}
 RUN test -f /opt/pocketmine/repo/PocketMine-MP.phar
 
 FROM ubuntu:22.04
-LABEL maintainer="EraseMC Core maintainers"
+LABEL maintainer="Erase-PocketMine-MP maintainers"
 
 RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates wget
 

@@ -1,6 +1,6 @@
-# EraseMC Core translations
+# Erase-PocketMine-MP translations
 
-These files contain translation strings used in EraseMC Core.
+These files contain translation strings used in Erase-PocketMine-MP.
 
 ## Contributing translations (non-English)
 Translation contributions are currently coordinated through the EraseMC GitHub repository. Open an issue or pull request describing the language changes and target branch.
@@ -14,8 +14,8 @@ Translation contributions are currently coordinated through the EraseMC GitHub r
 
 To add new strings, add them ONLY to `eng.ini`.
 
-- Vanilla strings should use the same keys as used by [Mojang](https://raw.githubusercontent.com/Mojang/bedrock-samples/refs/heads/main/resource_pack/texts/en_US.lang). EraseMC Core uses `{%paramName}` for parameters instead of `%1$s` `%2$s` etc, so you can't copy-paste them directly. Make sure to adapt these.
-- Strings specifically for EraseMC Core can have any keys you like, but they must start with `pocketmine.` for API compatibility.
+- Vanilla strings should use the same keys as used by [Mojang](https://raw.githubusercontent.com/Mojang/bedrock-samples/refs/heads/main/resource_pack/texts/en_US.lang). Erase-PocketMine-MP uses `{%paramName}` for parameters instead of `%1$s` `%2$s` etc, so you can't copy-paste them directly. Make sure to adapt these.
+- Strings specifically for Erase-PocketMine-MP can have any keys you like, but they must start with `pocketmine.` for API compatibility.
 
 > [!TIP]
 > You don't need to worry about translating newly added strings into other languages.

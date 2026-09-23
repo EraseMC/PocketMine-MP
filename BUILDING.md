@@ -1,4 +1,4 @@
-# Building EraseMC Core
+# Building Erase-PocketMine-MP
 ## Pre-requisites
 - A bash shell (git bash is sufficient for Windows)
 - [`git`](https://git-scm.com) available in your shell
@@ -6,7 +6,7 @@
 - [`composer`](https://getcomposer.org) available in your shell
 
 ## Custom PHP binaries
-Because EraseMC Core requires several non-standard PHP extensions and configuration, custom PHP binaries may be needed for local development.
+Because Erase-PocketMine-MP requires several non-standard PHP extensions and configuration, custom PHP binaries may be needed for local development.
 
 - [Upstream prebuilt binaries](https://github.com/pmmp/PHP-Binaries/releases)
 - [Compile scripts](https://github.com/pmmp/php-build-scripts) are provided as a submodule in the path `build/php`
@@ -29,5 +29,5 @@ Run `composer make-server` using your preferred PHP binary. It'll drop the serve
 
 You can also use the `--out` option to change the output filename.
 
-## Running EraseMC Core from source code
+## Running Erase-PocketMine-MP from source code
 Run `src/PocketMine.php` using your preferred PHP binary.
