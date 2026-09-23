@@ -20,10 +20,10 @@ This directory is the durable technical memory for EraseMC Core legacy-protocol 
 
 ## Scope policy
 
-The 1.19 and 1.18 lines remain documented in their respective files; the current development target is 1.17.x. Preview/beta builds are tracked separately and are not implied by stable-release support.
+The 1.17.x and 1.18.x lines are released; the 1.19 line remains documented in `1.19.md`. Preview/beta builds are tracked separately and are not implied by stable-release support.
 
 ## Ownership
 
-- Work branch: `feature/legacy-1.17` in `PocketMine-MP`, `BedrockProtocol`, and `BedrockData`.
+- Work branch: a short-lived `feature/legacy-<version>` branch in `PocketMine-MP`, `BedrockProtocol`, and `BedrockData`, deleted after release.
 - Integration target: PocketMine-MP `stable` and dependency `master` branches only after client validation and explicit owner release request. See `1.18.md` for the earlier owner-approved unverified protocol 503 exception.
 - Persistent owner: EraseMC.

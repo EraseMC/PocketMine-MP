@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d366fe8bfeb532ca22936f8b6b286728",
+    "content-hash": "58558366f4d31a9f0825d226e8c47a4e",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -221,7 +221,7 @@
         },
         {
             "name": "erasemc/bedrock-data",
-            "version": "dev-feature/legacy-1.17",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockData.git",
@@ -233,6 +233,7 @@
                 "reference": "3b9d00463226292f367e8820d0a659e700a9b3a0",
                 "shasum": ""
             },
+            "default-branch": true,
             "type": "library",
             "license": [
                 "CC0-1.0"
@@ -253,16 +254,16 @@
         },
         {
             "name": "erasemc/bedrock-protocol",
-            "version": "dev-feature/legacy-1.17",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockProtocol.git",
-                "reference": "1c71548134e81e7678547b17ecbc0c1182e19cf9"
+                "reference": "123ffc57608f9fb0c840a3773c715cb252ab401c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/1c71548134e81e7678547b17ecbc0c1182e19cf9",
-                "reference": "1c71548134e81e7678547b17ecbc0c1182e19cf9",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/123ffc57608f9fb0c840a3773c715cb252ab401c",
+                "reference": "123ffc57608f9fb0c840a3773c715cb252ab401c",
                 "shasum": ""
             },
             "require": {
@@ -281,6 +282,7 @@
                 "phpstan/phpstan-strict-rules": "^2.0.0",
                 "phpunit/phpunit": "^9.5 || ^10.0 || ^11.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -313,7 +315,7 @@
                 "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
                 "source": "https://github.com/EraseMC/BedrockProtocol"
             },
-            "time": "2026-09-23T20:21:54+00:00"
+            "time": "2026-09-23T20:44:58+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
