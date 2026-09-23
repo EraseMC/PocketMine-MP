@@ -145,6 +145,7 @@ class ResourcePacksPacketHandler extends PacketHandler{
 			worldTemplateVersion: "",
 			forceDisableVibrantVisuals: true,
 		));
+		$this->session->traceLegacy117('resource-pack offer sent');
 		$this->session->getLogger()->debug("Waiting for client to accept resource packs");
 	}
 
@@ -156,6 +157,7 @@ class ResourcePacksPacketHandler extends PacketHandler{
 	}
 
 	public function handleResourcePackClientResponse(ResourcePackClientResponsePacket $packet) : bool{
+		$this->session->traceLegacy117('resource-pack response status=' . $packet->status);
 		switch($packet->status){
 			case ResourcePackClientResponsePacket::STATUS_REFUSED:
 				//TODO: add lang strings for this

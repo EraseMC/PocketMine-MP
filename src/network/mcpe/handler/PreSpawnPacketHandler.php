@@ -50,6 +50,7 @@ use pocketmine\Server;
 use pocketmine\timings\Timings;
 use pocketmine\VersionInfo;
 use Ramsey\Uuid\Uuid;
+use function count;
 use function sprintf;
 
 /**
@@ -132,6 +133,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 				0,
 				$typeConverter->getItemTypeDictionary()->getEntries(),
 			));
+			$this->session->traceLegacy117('StartGame sent; item entries=' . count($typeConverter->getItemTypeDictionary()->getEntries()));
 
 			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_60){
 				$this->session->getLogger()->debug("Sending items");
@@ -174,12 +176,14 @@ class PreSpawnPacketHandler extends PacketHandler{
 
 			$this->session->getLogger()->debug("Sending player list");
 			$this->session->syncPlayerList($this->server->getOnlinePlayers());
+			$this->session->traceLegacy117('pre-spawn packet set sent');
 		}finally{
 			Timings::$playerNetworkSendPreSpawnGameData->stopTiming();
 		}
 	}
 
 	public function handleRequestChunkRadius(RequestChunkRadiusPacket $packet) : bool{
+		$this->session->traceLegacy117('client requested chunk radius=' . $packet->radius);
 		$this->player->setViewDistance($packet->radius);
 
 		return true;

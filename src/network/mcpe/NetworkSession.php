@@ -195,6 +195,7 @@ class NetworkSession{
 	private \SplQueue $compressedQueue;
 	private bool $forceAsyncCompression = true;
 	private ?int $protocolId = null;
+	private int $legacy117ChunkSendCount = 0;
 	protected bool $enableCompression = false; //disabled until handshake completed
 
 	private int $nextAckReceiptId = 0;
@@ -253,6 +254,13 @@ class NetworkSession{
 
 	public function getLogger() : \Logger{
 		return $this->logger;
+	}
+
+	/** Safe stage-only trace for the local 1.17.2 trial; never logs packet payloads or credentials. */
+	public function traceLegacy117(string $stage) : void{
+		if($this->protocolId === ProtocolInfo::PROTOCOL_1_17_0 && getenv('ERASEMC_TRACE_1_17') === '1'){
+			$this->logger->info("[1.17 trace] " . $stage);
+		}
 	}
 
 	private function onSessionStartSuccess() : void{
@@ -1058,6 +1066,7 @@ class NetworkSession{
 
 	private function onServerLoginSuccess() : void{
 		$this->loggedIn = true;
+		$this->traceLegacy117('login complete; sending resource-pack offer');
 
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_SUCCESS));
 
@@ -1081,18 +1090,21 @@ class NetworkSession{
 
 	private function beginSpawnSequence() : void{
 		$this->setHandler(new PreSpawnPacketHandler($this->server, $this->player, $this, $this->invManager));
+		$this->traceLegacy117('pre-spawn handler ready; awaiting chunk-radius request');
 		$this->player->setNoClientPredictions(); //TODO: HACK: fix client-side falling pre-spawn
 
 		$this->logger->debug("Waiting for chunk radius request");
 	}
 
 	public function notifyTerrainReady() : void{
+		$this->traceLegacy117('terrain ready; sending spawn status');
 		$this->logger->debug("Sending spawn notification, waiting for spawn response");
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::PLAYER_SPAWN));
 		$this->setHandler(new SpawnResponsePacketHandler($this->onClientSpawnResponse(...)));
 	}
 
 	private function onClientSpawnResponse() : void{
+		$this->traceLegacy117('client acknowledged spawn');
 		$this->logger->debug("Received spawn response, entering in-game phase");
 		$this->player->setNoClientPredictions(false); //TODO: HACK: we set this during the spawn sequence to prevent the client sending junk movements
 		$this->player->doFirstSpawn();
@@ -1325,6 +1337,10 @@ class NetworkSession{
 		$world->timings->syncChunkSend->startTiming();
 		try{
 			$this->queueCompressed($chunkPacket);
+			++$this->legacy117ChunkSendCount;
+			if(in_array($this->legacy117ChunkSendCount, [1, 8, 32, 64, 128, 224], true)){
+				$this->traceLegacy117("queued {$this->legacy117ChunkSendCount} chunks; latest=($chunkX,$chunkZ)");
+			}
 			$onCompletion();
 			if($this->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_10 && ($chunk = $world->getChunk($chunkX, $chunkZ)) !== null){
 				//The chunk creates the tiles with minimal NBT; these packets populate their contents.
