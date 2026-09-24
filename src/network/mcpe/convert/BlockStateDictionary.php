@@ -25,6 +25,7 @@ namespace pocketmine\network\mcpe\convert;
 
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockTypeNames;
+use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
@@ -71,16 +72,44 @@ final class BlockStateDictionary{
 	 */
 	private array $fixedPropertiesCache = [];
 
+	/*
+	 * States are kept as flat scalar lists rather than one object per state: every protocol keeps its dictionary
+	 * alive for the whole run, and the cyclic GC walks every object reachable from a possible root. Tens of
+	 * thousands of entry objects per palette made each collection cost well over 100ms on a multi-version server.
+	 */
+
+	/** @phpstan-var list<string> */
+	private array $stateNames = [];
+	/** @phpstan-var list<string> */
+	private array $rawStateProperties = [];
+	/** @phpstan-var list<int> */
+	private array $metas = [];
+	/**
+	 * Legacy palettes only: the state as the old client names it, encoded as NBT.
+	 * @phpstan-var array<int, string>
+	 */
+	private array $oldStateNbt = [];
+	/** @phpstan-var array<int, BlockStateData> */
+	private array $oldStateCache = [];
+
 	/**
 	 * @param BlockStateDictionaryEntry[] $states
 	 *
 	 * @phpstan-param list<BlockStateDictionaryEntry> $states
 	 */
 	public function __construct(
-		private array $states
+		array $states
 	){
 		$table = [];
-		foreach($this->states as $stateId => $stateNbt){
+		$nbtSerializer = new LittleEndianNbtSerializer();
+		foreach($states as $stateId => $stateNbt){
+			$this->stateNames[] = $stateNbt->getStateName();
+			$this->rawStateProperties[] = $stateNbt->getRawStateProperties();
+			$this->metas[] = $stateNbt->getMeta();
+			$oldState = $stateNbt->getOldBlockStateData();
+			if($oldState !== null){
+				$this->oldStateNbt[$stateId] = $nbtSerializer->write(new TreeRoot($oldState->toNbt()));
+			}
 			$table[$stateNbt->getStateName()][$stateNbt->getRawStateProperties()] = $stateId;
 		}
 
@@ -117,8 +146,8 @@ final class BlockStateDictionary{
 			$table = [];
 			//TODO: if we ever allow mutating the dictionary, this would need to be rebuilt on modification
 
-			foreach($this->states as $i => $state){
-				$table[$state->getStateName()][$state->getMeta()] = $i;
+			foreach($this->stateNames as $i => $stateName){
+				$table[$stateName][$this->metas[$i]] = $i;
 			}
 
 			$this->idMetaToStateIdLookupCache = [];
@@ -136,11 +165,23 @@ final class BlockStateDictionary{
 	}
 
 	public function generateDataFromStateId(int $networkRuntimeId) : ?BlockStateData{
-		return ($this->states[$networkRuntimeId] ?? null)?->generateStateData();
+		if(isset($this->oldStateNbt[$networkRuntimeId])){
+			return $this->oldStateCache[$networkRuntimeId] ??= BlockStateData::fromNbt(
+				(new LittleEndianNbtSerializer())->read($this->oldStateNbt[$networkRuntimeId])->mustGetCompoundTag()
+			);
+		}
+		return $this->generateCurrentDataFromStateId($networkRuntimeId);
 	}
 
 	public function generateCurrentDataFromStateId(int $networkRuntimeId) : ?BlockStateData{
-		return ($this->states[$networkRuntimeId] ?? null)?->generateCurrentStateData();
+		if(!isset($this->stateNames[$networkRuntimeId])){
+			return null;
+		}
+		return new BlockStateData(
+			$this->stateNames[$networkRuntimeId],
+			BlockStateDictionaryEntry::decodeStateProperties($this->rawStateProperties[$networkRuntimeId]),
+			BlockStateData::CURRENT_VERSION
+		);
 	}
 
 	/**
@@ -205,7 +246,7 @@ final class BlockStateDictionary{
 	 * This is used for serializing crafting recipe inputs.
 	 */
 	public function getMetaFromStateId(int $networkRuntimeId) : ?int{
-		return ($this->states[$networkRuntimeId] ?? null)?->getMeta();
+		return $this->metas[$networkRuntimeId] ?? null;
 	}
 
 	/**
@@ -229,9 +270,11 @@ final class BlockStateDictionary{
 	public function lookupStateIdFromOriginalIdMeta(string $id, int $meta) : ?int{
 		if($this->originalIdMetaToStateIdLookupCache === null){
 			$table = [];
-			foreach($this->states as $i => $state){
-				$table[$state->generateStateData()->getName()][$state->getMeta()] ??= $i;
+			foreach($this->stateNames as $i => $stateName){
+				$name = isset($this->oldStateNbt[$i]) ? $this->generateDataFromStateId($i)?->getName() ?? $stateName : $stateName;
+				$table[$name][$this->metas[$i]] ??= $i;
 			}
+			$this->oldStateCache = [];
 			$this->originalIdMetaToStateIdLookupCache = $table;
 		}
 		return $this->originalIdMetaToStateIdLookupCache[$id][$meta] ?? null;
@@ -242,7 +285,14 @@ final class BlockStateDictionary{
 	 * @return BlockStateDictionaryEntry[]
 	 * @phpstan-return array<int, BlockStateDictionaryEntry>
 	 */
-	public function getStates() : array{ return $this->states; }
+	public function getStates() : array{
+		$states = [];
+		foreach($this->stateNames as $i => $stateName){
+			$old = isset($this->oldStateNbt[$i]) ? $this->generateDataFromStateId($i) : null;
+			$states[$i] = new BlockStateDictionaryEntry($stateName, BlockStateDictionaryEntry::decodeStateProperties($this->rawStateProperties[$i]), $this->metas[$i], $old);
+		}
+		return $states;
+	}
 
 	/**
 	 * @return BlockStateData[]

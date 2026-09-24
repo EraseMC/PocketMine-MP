@@ -74,6 +74,8 @@ final class BlockStateDictionaryEntry{
 
 	public function getMeta() : int{ return $this->meta; }
 
+	public function getOldBlockStateData() : ?BlockStateData{ return $this->oldBlockStateData; }
+
 	/**
 	 * @return Tag[]
 	 */
