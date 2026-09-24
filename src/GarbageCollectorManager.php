@@ -41,7 +41,7 @@ use function sprintf;
  */
 final class GarbageCollectorManager{
 	private const GC_THRESHOLD_TRIGGER = 100;
-	private const GC_THRESHOLD_MAX = 20_001;
+	private const GC_THRESHOLD_MAX = 100_001;
 	private const GC_THRESHOLD_DEFAULT = 10_001;
 	private const GC_THRESHOLD_STEP = 10_000;
 
