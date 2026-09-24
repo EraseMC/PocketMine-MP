@@ -258,12 +258,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/EraseMC/BedrockProtocol.git",
-                "reference": "e931ab2685c3b450b940d92406eb1427ff41f3cd"
+                "reference": "5e8989864b7d8b255c872b9b845acdcf90a60fee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/e931ab2685c3b450b940d92406eb1427ff41f3cd",
-                "reference": "e931ab2685c3b450b940d92406eb1427ff41f3cd",
+                "url": "https://api.github.com/repos/EraseMC/BedrockProtocol/zipball/5e8989864b7d8b255c872b9b845acdcf90a60fee",
+                "reference": "5e8989864b7d8b255c872b9b845acdcf90a60fee",
                 "shasum": ""
             },
             "require": {
@@ -315,7 +315,7 @@
                 "issues": "https://github.com/EraseMC/BedrockProtocol/issues",
                 "source": "https://github.com/EraseMC/BedrockProtocol"
             },
-            "time": "2026-09-23T22:10:33+00:00"
+            "time": "2026-09-24T15:10:00+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
