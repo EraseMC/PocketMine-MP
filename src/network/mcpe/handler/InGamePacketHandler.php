@@ -840,6 +840,15 @@ class InGamePacketHandler extends PacketHandler{
 			case PlayerAction::STOP_SLEEPING:
 				$this->player->stopSleep();
 				break;
+			case PlayerAction::START_SPRINT:
+			case PlayerAction::STOP_SPRINT:
+				if($this->session->getProtocolId() > ProtocolInfo::PROTOCOL_1_16_220){
+					return false;
+				}
+				if(!$this->player->toggleSprint($action === PlayerAction::START_SPRINT)){
+					$this->player->sendData([$this->player]);
+				}
+				return true;
 			case PlayerAction::CRACK_BREAK:
 				self::validateFacing($face);
 				$this->player->continueBreakBlock($pos, $face);
