@@ -38,6 +38,10 @@ use function str_replace;
  * @internal
  */
 final class BlockTranslator{
+	/** @var array<string, BlockStateDictionary> */
+	private static array $dictionaryCache = [];
+	/** @var array<string, string> */
+	private static array $legacyPaletteCache = [];
 	public const CANONICAL_BLOCK_STATES_PATH = 0;
 	public const BLOCK_STATE_META_MAP_PATH = 1;
 
@@ -216,18 +220,28 @@ final class BlockTranslator{
 	public static function loadFromProtocolId(int $protocolId) : BlockTranslator{
 		if(isset(self::LEGACY_NETWORK_PALETTES[$protocolId])){
 			[$palettePath, $metaMapSuffix] = self::LEGACY_NETWORK_PALETTES[$protocolId];
-			$networkPalette = Filesystem::fileGetContents($palettePath);
-			$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", $metaMapSuffix . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+			$cacheKey = "legacy:" . $palettePath . ":" . $metaMapSuffix;
+			if(!isset(self::$dictionaryCache[$cacheKey])){
+				$networkPalette = Filesystem::fileGetContents($palettePath);
+				$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", $metaMapSuffix . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+				self::$dictionaryCache[$cacheKey] = BlockStateDictionary::loadFromPalette(BlockStateDictionary::loadLegacyPaletteFromString($networkPalette), $metaMappingRaw);
+				self::$legacyPaletteCache[$cacheKey] = $networkPalette;
+			}
 			return new self(
-				BlockStateDictionary::loadFromPalette(BlockStateDictionary::loadLegacyPaletteFromString($networkPalette), $metaMappingRaw),
+				self::$dictionaryCache[$cacheKey],
 				GlobalBlockStateHandlers::getSerializer(),
-				$networkPalette
+				self::$legacyPaletteCache[$cacheKey]
 			);
 		}
-		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
-		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+		$paths = self::PATHS[$protocolId];
+		$cacheKey = $paths[self::CANONICAL_BLOCK_STATES_PATH] . ":" . $paths[self::BLOCK_STATE_META_MAP_PATH];
+		if(!isset(self::$dictionaryCache[$cacheKey])){
+			$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", $paths[self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
+			$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", $paths[self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+			self::$dictionaryCache[$cacheKey] = BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw);
+		}
 		return new self(
-			BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw),
+			self::$dictionaryCache[$cacheKey],
 			GlobalBlockStateHandlers::getSerializer(),
 		);
 	}

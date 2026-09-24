@@ -142,6 +142,7 @@ use function file_exists;
 use function file_put_contents;
 use function filemtime;
 use function fopen;
+use function gc_collect_cycles;
 use function get_class;
 use function gettype;
 use function ini_set;
@@ -1335,6 +1336,10 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool(ServerProperties::ENABLE_QUERY, true);
 
 		$typeConverter = TypeConverter::getInstance();
+		foreach($this->versionRestrictions->getAllowedProtocols() as $protocolId){
+			TypeConverter::getInstance($protocolId);
+		}
+		gc_collect_cycles();
 		$packetBroadcaster = $this->getPacketBroadcaster(ProtocolInfo::CURRENT_PROTOCOL);
 		$entityEventBroadcaster = $this->getEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 
