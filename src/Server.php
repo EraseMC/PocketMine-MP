@@ -1061,7 +1061,9 @@ class Server{
 
 			$this->commandMap = new SimpleCommandMap($this);
 
-			$this->craftingManager = CraftingManagerFromDataHelper::make(BedrockDataFiles::RECIPES);
+			$this->craftingManager = $this->configGroup->getPropertyBool(Yml::CRAFTING_LOAD_RECIPES, true) ?
+				CraftingManagerFromDataHelper::make(BedrockDataFiles::RECIPES) :
+				new CraftingManager();
 
 			$this->resourceManager = new ResourcePackManager(Path::join($this->dataPath, "resource_packs"), $this->logger);
 

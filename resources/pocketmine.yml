@@ -163,6 +163,12 @@ chunk-sending:
   # Radius of chunks which must be sent before a player spawns.
   spawn-radius: 4
 
+crafting:
+  # Load the vanilla crafting, furnace and brewing recipes. Servers without crafting (such as PvP
+  # practice) can turn this off: the recipe book stays empty, and the recipes are neither kept in
+  # memory nor sent to joining players.
+  load-recipes: true
+
 chunk-ticking:
   # Radius of chunks around a player which are ticked.
   tick-radius: 3

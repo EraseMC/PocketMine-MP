@@ -65,6 +65,8 @@ final class YmlServerProperties{
 	public const CONSOLE = 'console';
 	public const CONSOLE_ENABLE_INPUT = 'console.enable-input';
 	public const CONSOLE_TITLE_TICK = 'console.title-tick';
+	public const CRAFTING = 'crafting';
+	public const CRAFTING_LOAD_RECIPES = 'crafting.load-recipes';
 	public const DEBUG = 'debug';
 	public const DEBUG_LEVEL = 'debug.level';
 	public const LEVEL_SETTINGS = 'level-settings';
