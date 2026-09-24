@@ -41,9 +41,9 @@ use function sprintf;
  */
 final class GarbageCollectorManager{
 	private const GC_THRESHOLD_TRIGGER = 100;
-	private const GC_THRESHOLD_MAX = 7_501;
-	private const GC_THRESHOLD_DEFAULT = 5_001;
-	private const GC_THRESHOLD_STEP = 2_500;
+	private const GC_THRESHOLD_MAX = 20_001;
+	private const GC_THRESHOLD_DEFAULT = 10_001;
+	private const GC_THRESHOLD_STEP = 10_000;
 
 	private int $threshold = self::GC_THRESHOLD_DEFAULT;
 	private int $collectionTimeTotalNs = 0;
