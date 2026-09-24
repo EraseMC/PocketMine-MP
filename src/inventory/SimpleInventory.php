@@ -60,6 +60,25 @@ class SimpleInventory extends BaseInventory{
 	 * @return Item[]
 	 * @phpstan-return array<int, Item>
 	 */
+	/**
+	 * Returns the stored items without cloning them. The items must not be modified.
+	 * @internal
+	 *
+	 * @return Item[]
+	 * @phpstan-return array<int, Item>
+	 */
+	public function getContentsUnsafe() : array{
+		$contents = [];
+
+		foreach($this->slots as $i => $slot){
+			if($slot !== null){
+				$contents[$i] = $slot;
+			}
+		}
+
+		return $contents;
+	}
+
 	public function getContents(bool $includeEmpty = false) : array{
 		$contents = [];
 

@@ -668,6 +668,16 @@ abstract class Living extends Entity{
 		$this->despawnFromAll();
 	}
 
+	/**
+	 * @var bool[]
+	 * @phpstan-var array<class-string<Item>, bool>
+	 */
+	private static array $wornTickingItems = [];
+
+	private static function ticksWhenWorn(Item $item) : bool{
+		return self::$wornTickingItems[$item::class] ??= (new \ReflectionMethod($item, "onTickWorn"))->getDeclaringClass()->getName() !== Item::class;
+	}
+
 	protected function entityBaseTick(int $tickDiff = 1) : bool{
 		Timings::$livingEntityBaseTick->startTiming();
 
@@ -688,11 +698,15 @@ abstract class Living extends Entity{
 				$hasUpdate = true;
 			}
 
-			foreach($this->armorInventory->getContents() as $index => $item){
-				$oldItem = clone $item;
+			//cloning every worn item each tick deep-copies its NBT, so only items that override onTickWorn() are copied
+			foreach($this->armorInventory->getContentsUnsafe() as $index => $worn){
+				if(!self::ticksWhenWorn($worn)){
+					continue;
+				}
+				$item = clone $worn;
 				if($item->onTickWorn($this)){
 					$hasUpdate = true;
-					if(!$item->equalsExact($oldItem)){
+					if(!$item->equalsExact($worn)){
 						$this->armorInventory->setItem($index, $item);
 					}
 				}
