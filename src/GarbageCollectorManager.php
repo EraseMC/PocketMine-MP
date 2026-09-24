@@ -40,8 +40,10 @@ use function sprintf;
  * The GC trigger behaviour in this class was adapted from Zend/zend_gc.c as of PHP 8.3.14.
  */
 final class GarbageCollectorManager{
+	//TODO: These values could be adjusted to better suit PM, but for now we just want to mirror PHP GC to minimize
+	//behavioural changes.
 	private const GC_THRESHOLD_TRIGGER = 100;
-	private const GC_THRESHOLD_MAX = 20_000;
+	private const GC_THRESHOLD_MAX = 1_000_000_000;
 	private const GC_THRESHOLD_DEFAULT = 10_001;
 	private const GC_THRESHOLD_STEP = 10_000;
 
