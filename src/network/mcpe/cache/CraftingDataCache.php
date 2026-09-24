@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\cache;
 
+use pmmp\encoding\ByteBufferWriter;
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
@@ -34,6 +35,7 @@ use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\data\bedrock\ItemTagDowngrader;
 use pocketmine\data\bedrock\ItemTagToIdMap;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\recipe\CraftingRecipeBlockName;
@@ -59,8 +61,10 @@ final class CraftingDataCache{
 	use ProtocolSingletonTrait;
 
 	/**
-	 * @var CraftingDataPacket[]
-	 * @phpstan-var array<int, CraftingDataPacket>
+	 * Encoded CraftingDataPacket per crafting manager. The packet is only ever sent as-is, so keeping it as bytes
+	 * rather than tens of thousands of recipe objects keeps it out of every cyclic GC scan.
+	 * @var string[]
+	 * @phpstan-var array<int, string>
 	 */
 	private array $caches = [];
 
@@ -70,7 +74,14 @@ final class CraftingDataCache{
 	 */
 	public const RECIPE_ID_OFFSET = 1;
 
+	/**
+	 * Builds a fresh CraftingDataPacket. Sessions are sent the encoded cache from getEncodedCache() instead.
+	 */
 	public function getCache(CraftingManager $manager) : CraftingDataPacket{
+		return $this->buildCraftingDataCache($manager);
+	}
+
+	public function getEncodedCache(CraftingManager $manager) : string{
 		$id = spl_object_id($manager);
 		if(!isset($this->caches[$id])){
 			$manager->getDestructorCallbacks()->add(function() use ($id) : void{
@@ -79,7 +90,7 @@ final class CraftingDataCache{
 			$manager->getRecipeRegisteredCallbacks()->add(function() use ($id) : void{
 				unset($this->caches[$id]);
 			});
-			$this->caches[$id] = $this->buildCraftingDataCache($manager);
+			$this->caches[$id] = NetworkSession::encodePacketTimed(new ByteBufferWriter(), $this->protocolId, $this->buildCraftingDataCache($manager));
 		}
 		return $this->caches[$id];
 	}
