@@ -57,19 +57,24 @@ use Ramsey\Uuid\UuidInterface;
 use function base64_decode;
 use function chr;
 use function count;
+use function filter_var;
 use function gettype;
 use function is_array;
 use function is_object;
+use function is_string;
 use function json_decode;
 use function md5;
 use function ord;
 use function substr;
+use const FILTER_VALIDATE_IP;
 use const JSON_THROW_ON_ERROR;
 
 /**
  * Handles the initial login phase of the session. This handler is used as the initial state.
  */
 class LoginPacketHandler extends PacketHandler{
+	private const PROXIED_IP_CLAIM = "Waterdog_IP";
+
 	/**
 	 * @phpstan-param \Closure(PlayerInfo) : void $playerInfoConsumer
 	 * @phpstan-param \Closure(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) : void $authCallback
@@ -395,6 +400,15 @@ class LoginPacketHandler extends PacketHandler{
 			[, $clientDataClaims, ] = JwtUtils::parse($clientDataJwt);
 		}catch(JwtException $e){
 			throw PacketHandlingException::wrap($e);
+		}
+
+		$proxiedIp = $clientDataClaims[self::PROXIED_IP_CLAIM] ?? null;
+		unset($clientDataClaims[self::PROXIED_IP_CLAIM]);
+		if($proxiedIp !== null && $this->server->getTrustedProxies()->contains($this->session->getIp())){
+			if(!is_string($proxiedIp) || filter_var($proxiedIp, FILTER_VALIDATE_IP) === false){
+				throw new PacketHandlingException("Trusted proxy sent an invalid player address");
+			}
+			$this->session->setProxiedIp($proxiedIp);
 		}
 
 		$mapper = $this->defaultJsonMapper("ClientData JWT body");

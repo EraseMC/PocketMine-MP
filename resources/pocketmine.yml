@@ -128,6 +128,11 @@ network:
   # attackers from stealing sessions and impersonating players.
   # DO NOT DISABLE THIS unless you understand the risks involved.
   enable-encryption: true
+  # Proxies allowed to report the real address of their players through the
+  # Waterdog_IP field of the login. Accepts addresses and ranges such as
+  # 172.16.0.0/12. The field is ignored on connections from anywhere else, so
+  # keep this empty when players connect to the server directly.
+  trusted-proxies: []
 
 #------------------------------------------------------------------------------#
 # Debugging

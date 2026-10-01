@@ -64,6 +64,7 @@ use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\network\mcpe\raklib\RakLibInterface;
 use pocketmine\network\mcpe\StandardEntityEventBroadcaster;
+use pocketmine\network\mcpe\TrustedProxies;
 use pocketmine\network\mcpe\StandardPacketBroadcaster;
 use pocketmine\network\mcpe\VersionRestrictions;
 use pocketmine\network\Network;
@@ -277,6 +278,7 @@ class Server{
 
 	private bool $onlineMode = true;
 	private AuthKeyProvider $authKeyProvider;
+	private TrustedProxies $trustedProxies;
 
 	private Network $network;
 	private VersionRestrictions $versionRestrictions;
@@ -376,6 +378,13 @@ class Server{
 	 */
 	public function requiresAuthentication() : bool{
 		return $this->getOnlineMode();
+	}
+
+	/**
+	 * Proxies whose connections may report the real address of the player through the login.
+	 */
+	public function getTrustedProxies() : TrustedProxies{
+		return $this->trustedProxies;
 	}
 
 	public function getPort() : int{
@@ -1002,6 +1011,8 @@ class Server{
 			);
 
 			EncryptionContext::$ENABLED = $this->configGroup->getPropertyBool(Yml::NETWORK_ENABLE_ENCRYPTION, true);
+
+			$this->trustedProxies = TrustedProxies::fromConfig($this->configGroup->getProperty(Yml::NETWORK_TRUSTED_PROXIES, []));
 
 			$this->doTitleTick = $this->configGroup->getPropertyBool(Yml::CONSOLE_TITLE_TICK, true) && Terminal::hasFormattingCodes();
 
