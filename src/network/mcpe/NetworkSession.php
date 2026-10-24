@@ -762,6 +762,29 @@ class NetworkSession{
 		}
 	}
 
+	public function flushLatencySensitiveOutput() : void{
+		if(!$this->connected || $this->player === null || !$this->server->isLowLatencyCombatFeedbackEnabled()){
+			return;
+		}
+
+		$this->syncDirtyAttributes();
+		$this->flushGamePacketQueue();
+	}
+
+	private function syncDirtyAttributes() : void{
+		if($this->player === null){
+			return;
+		}
+
+		$dirtyAttributes = $this->player->getAttributeMap()->needSend();
+		$this->entityEventBroadcaster->syncAttributes([$this], $this->player, $dirtyAttributes);
+		foreach($dirtyAttributes as $attribute){
+			//TODO: we might need to send these to other players in the future
+			//if that happens, this will need to become more complex than a flag on the attribute itself
+			$attribute->markSynchronized();
+		}
+	}
+
 	public function getBroadcaster() : PacketBroadcaster{ return $this->broadcaster; }
 
 	public function getEntityEventBroadcaster() : EntityEventBroadcaster{ return $this->entityEventBroadcaster; }
@@ -1539,14 +1562,7 @@ class NetworkSession{
 
 		if($this->player !== null){
 			$this->player->doChunkRequests();
-
-			$dirtyAttributes = $this->player->getAttributeMap()->needSend();
-			$this->entityEventBroadcaster->syncAttributes([$this], $this->player, $dirtyAttributes);
-			foreach($dirtyAttributes as $attribute){
-				//TODO: we might need to send these to other players in the future
-				//if that happens, this will need to become more complex than a flag on the attribute itself
-				$attribute->markSynchronized();
-			}
+			$this->syncDirtyAttributes();
 		}
 		Timings::$playerNetworkSendInventorySync->startTiming();
 		try{

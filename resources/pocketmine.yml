@@ -119,6 +119,9 @@ network:
   # Only packets larger than this many bytes are compressed asynchronously; the
   # AsyncTask overhead is only worth it for large packets.
   async-compression-threshold: 10000
+  # Send the knockback, hurt animation and health of a melee hit as soon as the
+  # hit is handled instead of waiting for the end of the next tick (up to 50ms).
+  combat-low-latency-feedback: true
   # Experimental: forward the server port automatically with UPnP.
   upnp-forwarding: false
   # Maximum size of packets sent over the network, in bytes (default 1492).

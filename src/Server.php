@@ -218,6 +218,7 @@ class Server{
 	private const TICKS_PER_WORLD_CACHE_CLEAR = 5 * self::TARGET_TICKS_PER_SECOND;
 	private const TICKS_PER_TPS_OVERLOAD_WARNING = 5 * self::TARGET_TICKS_PER_SECOND;
 	private const TICKS_PER_STATS_REPORT = 300 * self::TARGET_TICKS_PER_SECOND;
+	private const COMBAT_QUIET_TICKS = 2 * self::TARGET_TICKS_PER_SECOND;
 
 	private const DEFAULT_ASYNC_COMPRESSION_THRESHOLD = 10_000;
 
@@ -284,6 +285,8 @@ class Server{
 	private VersionRestrictions $versionRestrictions;
 	private bool $networkCompressionAsync = true;
 	private int $networkCompressionAsyncThreshold = self::DEFAULT_ASYNC_COMPRESSION_THRESHOLD;
+	private bool $lowLatencyCombatFeedback = true;
+	private int $lastCombatTick = -self::COMBAT_QUIET_TICKS;
 
 	private Language $language;
 	private bool $forceLanguage = false;
@@ -385,6 +388,18 @@ class Server{
 	 */
 	public function getTrustedProxies() : TrustedProxies{
 		return $this->trustedProxies;
+	}
+
+	public function isLowLatencyCombatFeedbackEnabled() : bool{
+		return $this->lowLatencyCombatFeedback;
+	}
+
+	public function markCombat() : void{
+		$this->lastCombatTick = $this->tickCounter;
+	}
+
+	public function isInCombat() : bool{
+		return $this->tickCounter - $this->lastCombatTick < self::COMBAT_QUIET_TICKS;
 	}
 
 	public function getPort() : int{
@@ -1009,6 +1024,8 @@ class Server{
 				$this->configGroup->getPropertyInt(Yml::NETWORK_ASYNC_COMPRESSION_THRESHOLD, self::DEFAULT_ASYNC_COMPRESSION_THRESHOLD),
 				$netCompressionThreshold ?? self::DEFAULT_ASYNC_COMPRESSION_THRESHOLD
 			);
+
+			$this->lowLatencyCombatFeedback = $this->configGroup->getPropertyBool(Yml::NETWORK_COMBAT_LOW_LATENCY_FEEDBACK, true);
 
 			EncryptionContext::$ENABLED = $this->configGroup->getPropertyBool(Yml::NETWORK_ENABLE_ENCRYPTION, true);
 
