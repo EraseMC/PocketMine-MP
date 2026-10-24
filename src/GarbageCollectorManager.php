@@ -44,8 +44,11 @@ final class GarbageCollectorManager{
 	private const GC_THRESHOLD_MAX = 100_001;
 	private const GC_THRESHOLD_DEFAULT = 10_001;
 	private const GC_THRESHOLD_STEP = 10_000;
+	private const GC_DEFERRED_THRESHOLD_MAX = 1_000_001;
 
 	private int $threshold = self::GC_THRESHOLD_DEFAULT;
+	/** @phpstan-var (\Closure() : bool)|null */
+	private ?\Closure $deferWhile = null;
 	private int $collectionTimeTotalNs = 0;
 	private int $runs = 0;
 
@@ -75,11 +78,19 @@ final class GarbageCollectorManager{
 
 	public function getThreshold() : int{ return $this->threshold; }
 
+	/** @phpstan-param (\Closure() : bool)|null $condition */
+	public function deferWhile(?\Closure $condition) : void{
+		$this->deferWhile = $condition;
+	}
+
 	public function getCollectionTimeTotalNs() : int{ return $this->collectionTimeTotalNs; }
 
 	public function maybeCollectCycles() : int{
 		$rootsBefore = gc_status()["roots"];
 		if($rootsBefore < $this->threshold){
+			return 0;
+		}
+		if($rootsBefore < self::GC_DEFERRED_THRESHOLD_MAX && $this->deferWhile !== null && ($this->deferWhile)()){
 			return 0;
 		}
 
