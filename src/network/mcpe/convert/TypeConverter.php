@@ -133,7 +133,7 @@ class TypeConverter{
 	 *
 	 * @internal
 	 */
-	public function coreGameModeToProtocol(GameMode $gamemode) : int{
+	public function coreGameModeToProtocol(GameMode $gamemode) : ProtocolGameMode{
 		return match($gamemode){
 			GameMode::SURVIVAL => ProtocolGameMode::SURVIVAL,
 			//TODO: native spectator support
@@ -142,7 +142,7 @@ class TypeConverter{
 		};
 	}
 
-	public function protocolGameModeToCore(int $gameMode) : ?GameMode{
+	public function protocolGameModeToCore(ProtocolGameMode $gameMode) : ?GameMode{
 		return match($gameMode){
 			ProtocolGameMode::SURVIVAL => GameMode::SURVIVAL,
 			ProtocolGameMode::CREATIVE => GameMode::CREATIVE,
@@ -162,12 +162,9 @@ class TypeConverter{
 			[$stringId, $meta] = $this->itemDataDowngrader->downgrade($oldStringId, 0);
 
 			$meta = $meta === 0 && $stringId === $oldStringId ? self::RECIPE_INPUT_WILDCARD_META : $meta; // downgrader returns the same meta
-			if($this->protocolId >= ProtocolInfo::PROTOCOL_1_26_40){
-				$descriptor = new StringIdMetaItemDescriptor($stringId, $meta);
-			}else{
-				$id = $this->itemTypeDictionary->fromStringId($stringId);
-				$descriptor = new IntIdMetaItemDescriptor($id, $meta);
-			}
+			$descriptor = $this->protocolId >= ProtocolInfo::PROTOCOL_1_26_40 ?
+				new StringIdMetaItemDescriptor($stringId, $meta) :
+				new IntIdMetaItemDescriptor($this->itemTypeDictionary->fromStringId($stringId), $meta);
 		}elseif($ingredient instanceof ExactRecipeIngredient){
 			$item = $ingredient->getItem();
 			[$id, $meta, $blockRuntimeId] = $this->itemTranslator->toNetworkId($item);
@@ -177,12 +174,9 @@ class TypeConverter{
 					throw new AssumptionFailedError("Every block state should have an associated meta value");
 				}
 			}
-			if($this->protocolId >= ProtocolInfo::PROTOCOL_1_26_40){
-				$id = $this->itemTypeDictionary->fromIntId($id);
-				$descriptor = new StringIdMetaItemDescriptor($id, $meta);
-			}else{
-				$descriptor = new IntIdMetaItemDescriptor($id, $meta);
-			}
+			$descriptor = $this->protocolId >= ProtocolInfo::PROTOCOL_1_26_40 ?
+				new StringIdMetaItemDescriptor($this->itemTypeDictionary->fromIntId($id), $meta) :
+				new IntIdMetaItemDescriptor($id, $meta);
 		}elseif($ingredient instanceof TagWildcardRecipeIngredient){
 			if($this->protocolId < ProtocolInfo::PROTOCOL_1_19_30){
 				throw new \InvalidArgumentException("TagWildcardRecipeIngredient is not supported before 1.19.30");

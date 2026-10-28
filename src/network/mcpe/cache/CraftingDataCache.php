@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\cache;
 
+use pmmp\encoding\BE;
 use pmmp\encoding\ByteBufferWriter;
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
@@ -104,6 +105,10 @@ final class CraftingDataCache{
 		$nullUUID = Uuid::fromString(Uuid::NIL);
 		$converter = TypeConverter::getInstance($this->protocolId);
 		$itemTagDowngrader = ItemTagDowngrader::getInstance($this->protocolId);
+		$protocolId = $this->getProtocolId();
+		$makeRecipeId = static fn(int $recipeNetId) : string => $protocolId >= ProtocolInfo::PROTOCOL_1_26_40 ?
+			Uuid::uuid4()->toString() :
+			BE::packUnsignedInt($recipeNetId); //TODO: this should probably be changed to something human-readable
 
 		$noUnlockingRequirement = new RecipeUnlockingRequirement(RecipeUnlockingContext::ALWAYS_UNLOCKED, null);
 		$recipeNetId = self::RECIPE_ID_OFFSET;
@@ -124,7 +129,7 @@ final class CraftingDataCache{
 				foreach($itemTagDowngrader->downgradeShapelessRecipe($recipe) as $r){
 					try{
 						$shapelessRecipes[] = new ProtocolShapelessRecipe(
-							Uuid::uuid4()->toString(),
+							$makeRecipeId($recipeNetId),
 							array_map($converter->coreRecipeIngredientToNet(...), $r->getIngredientList()),
 							array_map($converter->coreItemStackToNet(...), $r->getResults()),
 							$nullUUID,
@@ -149,7 +154,7 @@ final class CraftingDataCache{
 							$inputs[] = $rowInputs;
 						}
 						$shapedRecipes[] = new ProtocolShapedRecipe(
-							Uuid::uuid4()->toString(),
+							$makeRecipeId($recipeNetId),
 							$inputs,
 							array_map($converter->coreItemStackToNet(...), $r->getResults()),
 							$nullUUID,
@@ -176,14 +181,12 @@ final class CraftingDataCache{
 				FurnaceType::CAMPFIRE => FurnaceRecipeBlockName::CAMPFIRE,
 				FurnaceType::SOUL_CAMPFIRE => FurnaceRecipeBlockName::SOUL_CAMPFIRE
 			};
-			if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_26_20){
-				$recipeNetId++;
-			}
 			foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
 				try{
-					if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_26_20){
+					if($protocolId >= ProtocolInfo::PROTOCOL_1_26_20){
+						$recipeNetId++;
 						$shapelessRecipes[] = new ProtocolShapelessRecipe(
-							Uuid::uuid4()->toString(),
+							$makeRecipeId($recipeNetId),
 							[$converter->coreRecipeIngredientToNet($recipe->getInput())],
 							[$converter->coreItemStackToNet($recipe->getResult())],
 							$nullUUID,
@@ -196,12 +199,8 @@ final class CraftingDataCache{
 						$input = $recipe->getInput();
 
 						if($input instanceof TagWildcardRecipeIngredient){
-							foreach(ItemTagToIdMap::getInstance($this->getProtocolId())->getIdsForTag($input->getTagName()) as $itemId){
-								[$inputId, $inputMeta] = self::descriptorToIntIdMeta(
-									$converter,
-									$converter->coreRecipeIngredientToNet(new MetaWildcardRecipeIngredient($itemId))->getDescriptor()
-								);
-
+							foreach(ItemTagToIdMap::getInstance($protocolId)->getIdsForTag($input->getTagName()) as $itemId){
+								[$inputId, $inputMeta] = self::descriptorToIdMeta($converter, $converter->coreRecipeIngredientToNet(new MetaWildcardRecipeIngredient($itemId))->getDescriptor());
 								$furnaceRecipes[] = new ProtocolFurnaceRecipe(
 									CraftingDataPacket::ENTRY_FURNACE_DATA,
 									$inputId,
@@ -211,8 +210,7 @@ final class CraftingDataCache{
 								);
 							}
 						}else{
-							[$inputId, $inputMeta] = self::descriptorToIntIdMeta($converter, $converter->coreRecipeIngredientToNet($input)->getDescriptor());
-
+							[$inputId, $inputMeta] = self::descriptorToIdMeta($converter, $converter->coreRecipeIngredientToNet($input)->getDescriptor());
 							$furnaceRecipes[] = new ProtocolFurnaceRecipe(
 								CraftingDataPacket::ENTRY_FURNACE_DATA,
 								$inputId,
@@ -232,8 +230,8 @@ final class CraftingDataCache{
 		$itemTypeDictionary = $converter->getItemTypeDictionary();
 		foreach($manager->getPotionTypeRecipes() as $recipe){
 			try{
-				[$inputId, $inputMeta] = self::descriptorToIntIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getInput())->getDescriptor());
-				[$ingredientId, $ingredientMeta] = self::descriptorToIntIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor());
+				[$inputId, $inputMeta] = self::descriptorToIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getInput())->getDescriptor());
+				[$ingredientId, $ingredientMeta] = self::descriptorToIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor());
 				$output = $converter->coreItemStackToNet($recipe->getOutput());
 				$potionTypeRecipes[] = new ProtocolPotionTypeRecipe(
 					$inputId,
@@ -252,7 +250,7 @@ final class CraftingDataCache{
 		foreach($manager->getPotionContainerChangeRecipes() as $recipe){
 			try{
 				$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
-				[$ingredientId, ] = self::descriptorToIntIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor());
+				[$ingredientId, ] = self::descriptorToIdMeta($converter, $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor());
 				$output = $itemTypeDictionary->fromStringId($recipe->getOutputItemId());
 				$potionContainerChangeRecipes[] = new ProtocolPotionContainerChangeRecipe(
 					$input,
@@ -274,21 +272,20 @@ final class CraftingDataCache{
 			[],
 			[],
 			[],
-			$furnaceRecipes,
 			$potionTypeRecipes,
 			$potionContainerChangeRecipes,
 			[],
-			true
+			true,
+			$furnaceRecipes
 		);
 	}
 
 	/**
-	 * Some parts of CraftingDataPacket still use numeric item IDs, while ingredients are described by name since
-	 * 1.26.40. This converts either descriptor flavour back to a numeric ID and meta pair.
+	 * Recipe ingredients use int IDs before 1.26.40 and string IDs since, but potion and furnace recipes always use int IDs
 	 *
 	 * @phpstan-return array{int, int}
 	 */
-	private static function descriptorToIntIdMeta(TypeConverter $converter, ?ItemDescriptor $descriptor) : array{
+	private static function descriptorToIdMeta(TypeConverter $converter, ?ItemDescriptor $descriptor) : array{
 		if($descriptor instanceof IntIdMetaItemDescriptor){
 			return [$descriptor->getId(), $descriptor->getMeta()];
 		}

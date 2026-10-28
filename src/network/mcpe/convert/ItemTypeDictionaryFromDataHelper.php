@@ -46,6 +46,7 @@ final class ItemTypeDictionaryFromDataHelper{
 
 	private const PATHS = [
 		ProtocolInfo::CURRENT_PROTOCOL => "",
+		ProtocolInfo::PROTOCOL_1_26_50 => "-1.26.50",
 		ProtocolInfo::PROTOCOL_1_26_45 => "-1.26.40",
 		ProtocolInfo::PROTOCOL_1_26_44 => "-1.26.40",
 		ProtocolInfo::PROTOCOL_1_26_40 => "-1.26.40",
@@ -105,8 +106,15 @@ final class ItemTypeDictionaryFromDataHelper{
 		ProtocolInfo::PROTOCOL_1_16_0 => "-1.16.0",
 	];
 
+	/**
+	 * Protocols that share the same data file share the same instance
+	 * @var ItemTypeDictionary[]
+	 * @phpstan-var array<string, ItemTypeDictionary>
+	 */
+	private static array $loaded = [];
+
 	public static function loadFromProtocolId(int $protocolId) : ItemTypeDictionary{
-		return self::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
+		return self::$loaded[self::PATHS[$protocolId]] ??= self::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
 	}
 
 	public static function loadFromString(string $data) : ItemTypeDictionary{

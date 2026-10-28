@@ -108,6 +108,23 @@ class LoginPacketHandler extends PacketHandler{
 		}
 		$clientData = $this->parseClientData($packet->clientDataJwt);
 
+		$profileId = LegacyClientProfile::select($this->session->getProtocolId(), $clientData->GameVersion);
+		if($profileId !== $this->session->getProtocolId()){
+			$this->session->setProtocolId($profileId);
+		}
+
+		if($this->session->getProtocolId() === ProtocolInfo::PROTOCOL_1_26_44){
+			//1.26.40 clients also send 2168, but 1.26.44 changed the wire format without a protocol bump
+			try{
+				$version = new VersionString($clientData->GameVersion);
+			}catch(\InvalidArgumentException $e){
+				throw PacketHandlingException::wrap($e);
+			}
+			if($version->getMajor() === 1 && $version->getMinor() === 26 && $version->getPatch() < 44){
+				$this->session->setProtocolId(ProtocolInfo::PROTOCOL_1_26_40);
+			}
+		}
+
 		if($authInfo->AuthenticationType === AuthenticationType::FULL->value){
 			try{
 				[$headerArray, $claimsArray,] = JwtUtils::parse($authInfo->Token);
@@ -129,7 +146,9 @@ class LoginPacketHandler extends PacketHandler{
 			$this->processOpenIdLogin($authInfo->Token, $header->kid, $packet->clientDataJwt, $authRequired);
 
 		}elseif($authInfo->AuthenticationType === AuthenticationType::SELF_SIGNED->value){
-			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_26_20){
+			//1.26.10 clients may already send the self-signed OpenID token instead of the certificate chain
+			$protocolId = $this->session->getProtocolId();
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_26_20 || ($protocolId >= ProtocolInfo::PROTOCOL_1_26_10 && $authInfo->Token !== "")){
 				try{
 					[, $claimsArray, ] = JwtUtils::parse($authInfo->Token);
 				}catch(JwtException $e){
@@ -246,22 +265,6 @@ class LoginPacketHandler extends PacketHandler{
 			$this->session->disconnectWithError(KnownTranslationFactory::disconnectionScreen_invalidName());
 
 			return null;
-		}
-
-		$profileId = LegacyClientProfile::select($this->session->getProtocolId(), $clientData->GameVersion);
-		if($profileId !== $this->session->getProtocolId()){
-			$this->session->setProtocolId($profileId);
-		}
-
-		if($this->session->getProtocolId() === ProtocolInfo::PROTOCOL_1_26_44){
-			try{
-				$version = new VersionString($clientData->GameVersion);
-			}catch(\InvalidArgumentException $e){
-				throw PacketHandlingException::wrap($e);
-			}
-			if($version->getMajor() === 1 && $version->getMinor() === 26 && $version->getPatch() < 44){
-				$this->session->setProtocolId(ProtocolInfo::PROTOCOL_1_26_40);
-			}
 		}
 
 		try{

@@ -18,6 +18,9 @@ sudo chown -R 1000:1000 data plugins
 docker run -it -p 19132:19132/udp -v $PWD/data:/data -v $PWD/plugins:/plugins ghcr.io/erasemc/pocketmine-mp
 ```
 
+> [!NOTE]
+> The image is also published to the GitHub Container Registry. To use it, prefix the image name with `ghcr.io/` (e.g. `ghcr.io/erasemc/pocketmine-mp`).
+
 To run a specific version, just add it to the end of the command, like this:
 ```
 docker run -it -p 19132:19132/udp -v $PWD/data:/data -v $PWD/plugins:/plugins ghcr.io/erasemc/pocketmine-mp:5.46.0
@@ -95,6 +98,13 @@ The list of plugins should be given in the format `PluginOne:1.2.3 PluginTwo:4.5
 
 ## Advanced usage: Passing args to PocketMine-MP.phar inside the container
 The `POCKETMINE_ARGS` environment variable will be passed to `PocketMine-MP.phar` when run.
+
+## Image tags
+Images are built by pushing to `stable` with `[Build]` in the commit message, and are published to both Docker Hub and the GitHub Container Registry.
+The version comes from `BASE_VERSION` in `src/VersionInfo.php`, with `-dev` added while `IS_DEVELOPMENT_BUILD` is `true`:
+- `<version>` (e.g. `5.50.0-dev`) is overwritten every time that version is built.
+- `<version>-<short sha>` is never overwritten, use it to pin an exact build.
+- `latest` is the newest build.
 
 ## Building this image
 The Dockerfile requires a build-arg `GIT_HASH` to fill the git hash metadata when building `PocketMine-MP.phar`.

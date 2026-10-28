@@ -29,6 +29,7 @@ use pmmp\encoding\DataDecodeException;
 use pocketmine\block\tile\Spawnable;
 use pocketmine\entity\effect\EffectInstance;
 use pocketmine\event\player\PlayerDuplicateLoginEvent;
+use pocketmine\event\player\PlayerIdentityVerifyEvent;
 use pocketmine\event\player\PlayerResourcePackOfferEvent;
 use pocketmine\event\player\SessionDisconnectEvent;
 use pocketmine\event\server\DataPacketDecodeEvent;
@@ -108,6 +109,8 @@ use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\network\mcpe\protocol\UpdateAdventureSettingsPacket;
 use pocketmine\network\NetworkSessionManager;
 use pocketmine\network\PacketHandlingException;
+use pocketmine\network\TransportIdentityException;
+use pocketmine\network\TransportIdentityKey;
 use pocketmine\permission\DefaultPermissionNames;
 use pocketmine\permission\DefaultPermissions;
 use pocketmine\player\GameMode;
@@ -227,7 +230,9 @@ class NetworkSession{
 		private Compressor $compressor,
 		private TypeConverter $typeConverter,
 		private string $ip,
-		private int $port
+		private int $port,
+		private ?TransportIdentityKey $transportIdentityKey = null,
+		private bool $transportEncrypted = false
 	){
 		$this->logger = new \PrefixedLogger($this->server->getLogger(), $this->getLogPrefix());
 
@@ -473,11 +478,12 @@ class NetworkSession{
 				}
 			}elseif($this->enableCompression){
 				if($this->protocolId >= ProtocolInfo::PROTOCOL_1_20_60){
-					$compressionType = ord($payload[0]);
+					$compressionTypeId = ord($payload[0]);
+					$compressionType = CompressionAlgorithm::tryFrom($compressionTypeId);
 					$compressed = substr($payload, 1);
 					if($compressionType === CompressionAlgorithm::NONE){
 						$decompressed = $compressed;
-					}elseif($compressionType === $this->compressor->getNetworkId()){
+					}elseif($compressionType === $this->compressor->getNetworkType()){
 						try{
 							Timings::$playerNetworkReceiveDecompress->startTiming();
 							$decompressed = $this->compressor->decompress($compressed);
@@ -488,7 +494,7 @@ class NetworkSession{
 							Timings::$playerNetworkReceiveDecompress->stopTiming();
 						}
 					}else{
-						throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
+						throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionTypeId");
 					}
 				}else{
 					try{
@@ -1007,6 +1013,14 @@ class NetworkSession{
 				$error = "Expected XUID but none found";
 			}elseif($clientPubKey === null){
 				$error = "Missing client public key"; //failsafe
+			}elseif($authenticated && $this->transportIdentityKey !== null){
+				//Authenticated logins require the connection's proven key to prevent replay attacks,
+				//unauthenticated logins carry no verified identity to impersonate.
+				try{
+					$this->transportIdentityKey->verify($clientPubKey);
+				}catch(TransportIdentityException $e){
+					$error = $e->getMessage();
+				}
 			}
 		}
 
@@ -1017,6 +1031,9 @@ class NetworkSession{
 			);
 
 			return;
+		}
+		if($clientPubKey === null){
+			throw new AssumptionFailedError("Client public key should have been checked above");
 		}
 
 		$this->authenticated = $authenticated;
@@ -1032,6 +1049,22 @@ class NetworkSession{
 			}
 		}
 		$this->logger->debug("Xbox Live authenticated: " . ($this->authenticated ? "YES" : "NO"));
+
+		$ev = new PlayerIdentityVerifyEvent(
+			$this,
+			$this->info ?? throw new AssumptionFailedError("Player info is set before login verification starts"),
+			$this->authenticated,
+			$authRequired,
+			$clientPubKey,
+			$this->transportIdentityKey,
+			"Plugin reason",
+			KnownTranslationFactory::pocketmine_disconnect_error_authentication()
+		);
+		$ev->call();
+		if($ev->isCancelled()){
+			$this->disconnect($ev->getDisconnectReason(), $ev->getDisconnectScreenMessage());
+			return;
+		}
 
 		$checkXUID = $this->server->getConfigGroup()->getPropertyBool(YmlServerProperties::PLAYER_VERIFY_XUID, true);
 		$myXUID = $this->info instanceof XboxLivePlayerInfo ? $this->info->getXuid() : "";
@@ -1080,7 +1113,8 @@ class NetworkSession{
 			}
 		}
 
-		if(EncryptionContext::$ENABLED){
+		// Skip handshake if the transport layer already provides encryption and client identity.
+		if(EncryptionContext::$ENABLED && !($this->transportEncrypted && $this->transportIdentityKey !== null)){
 			$this->server->getAsyncPool()->submitTask(new PrepareEncryptionTask($clientPubKey, function(string $encryptionKey, string $handshakeJwt) : void{
 				if(!$this->connected){
 					return;
@@ -1492,18 +1526,18 @@ class NetworkSession{
 	 * @param Player[] $players
 	 */
 	public function syncPlayerList(array $players) : void{
-		$this->sendDataPacket(PlayerListPacket::add(array_map(function(Player $player) : PlayerListEntry{
+		$this->sendDataPacket(PlayerListPacket::create(array_map(function(Player $player) : PlayerListEntry{
 			return PlayerListEntry::createAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), $this->typeConverter->getSkinAdapter()->toSkinData($player->getSkin()), $player->getXuid());
 		}, $players)));
 	}
 
 	public function onPlayerAdded(Player $p) : void{
-		$this->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), $this->typeConverter->getSkinAdapter()->toSkinData($p->getSkin()), $p->getXuid())]));
+		$this->sendDataPacket(PlayerListPacket::create([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), $this->typeConverter->getSkinAdapter()->toSkinData($p->getSkin()), $p->getXuid())]));
 	}
 
 	public function onPlayerRemoved(Player $p) : void{
 		if($p !== $this->player){
-			$this->sendDataPacket(PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($p->getUniqueId())]));
+			$this->sendDataPacket(PlayerListPacket::create([PlayerListEntry::createRemovalEntry($p->getUniqueId())]));
 		}
 	}
 

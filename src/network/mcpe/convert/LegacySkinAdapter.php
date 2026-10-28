@@ -47,11 +47,11 @@ class LegacySkinAdapter implements SkinAdapter{
 		$geometryData = $skin->getGeometryData();
 		if($geometryData === ""){
 			//the client drops the connection if it receives an empty geometry string
-			$geometryData = "null";
+			$geometryData = SkinData::GEOMETRY_DATA_NONE;
 		}
 		return new SkinData(
 			$skin->getSkinId(),
-			"", //TODO: playfab ID
+			"", //TODO: playfab ID (only sent as part of the skin to protocols <= 1.26.50)
 			json_encode(["geometry" => ["default" => $geometryName]], JSON_THROW_ON_ERROR),
 			SkinImage::fromLegacy($skin->getSkinData()),
 			[],

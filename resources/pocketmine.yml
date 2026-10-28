@@ -123,19 +123,117 @@ network:
   # hit is handled instead of waiting for the end of the next tick (up to 50ms).
   combat-low-latency-feedback: true
   # Experimental: forward the server port automatically with UPnP.
+  # DEPRECATED: only the RakNet port is forwarded, and this setting will be
+  # removed together with RakNet. NetherNet traverses NAT with the STUN/TURN
+  # servers in transport.nethernet.ice-servers instead.
   upnp-forwarding: false
   # Maximum size of packets sent over the network, in bytes (default 1492).
   # Larger packets are split. Clients may request MTU sizes up to this value.
+  # DEPRECATED: only applies to RakNet. NetherNet uses transport.nethernet.mtu.
   max-mtu-size: 1492
   # Encrypt Minecraft network traffic. This costs some performance, but stops
   # attackers from stealing sessions and impersonating players.
   # DO NOT DISABLE THIS unless you understand the risks involved.
+  # DEPRECATED: will be removed together with RakNet. NetherNet connections are
+  # always encrypted by the transport.
   enable-encryption: true
   # Proxies allowed to report the real address of their players through the
   # Waterdog_IP field of the login. Accepts addresses and ranges such as
   # 172.16.0.0/12. The field is ignored on connections from anywhere else, so
   # keep this empty when players connect to the server directly.
   trusted-proxies: []
+
+#------------------------------------------------------------------------------#
+# Transport
+#------------------------------------------------------------------------------#
+transport:
+  # Network transports used for player connections, as a comma-separated list
+  # of up to 8 entries (e.g. raknet,nethernet). Built in: raknet, nethernet.
+  # Plugins may register more. NetherNet needs the ext-webrtc PHP extension;
+  # without it the transport is skipped with a warning and the others start.
+  # Clients before 1.26.50 can only join through RakNet.
+  name: nethernet,raknet
+  # Settings of the NetherNet (WebRTC) transport.
+  nethernet:
+    # Persistent identity key, relative to the data directory. Clients trust
+    # this key on their first join; replacing the file makes returning players
+    # verify the server again, so back it up.
+    key-file: nethernet.key
+
+    # Operator domain or server name included in identity assertions sent to
+    # clients. Empty uses the server MOTD without formatting codes. Clients pin
+    # the key rather than this name, so it can be changed freely.
+    identity-domain:
+
+    # Multiplex every ICE connection over a single UDP socket. The port is only
+    # fixed if port-range is a single port, otherwise any port is used.
+    # NOTE: cannot be used with TURN servers.
+    ice-udp-mux: false
+
+    # UDP port range for connections as [min, max], e.g. [19132, 19140].
+    # Empty uses any available port.
+    port-range:
+
+    # Maximum size of IP packets sent to clients, in bytes (620 to 4144). It is
+    # not negotiated, so only raise it if every client's network path allows it.
+    mtu: 1200
+
+    # Addresses advertised to clients for peer connections instead of the
+    # locally gathered interface addresses. Useful behind a 1:1 NAT (the public
+    # IP) or when some interfaces are unreachable. Addresses are announced with
+    # the local port, so port forwarding must not translate ports. Only affects
+    # HTTP signaling; LAN discovery always advertises local addresses.
+    advertise-addresses:
+    #- 203.0.113.10
+
+    # STUN/TURN servers for NAT traversal and relay. Unreachable servers delay
+    # connections until candidate gathering times out. port defaults to 3478.
+    ice-servers:
+    #- type: stun
+    #  host: stun.example.com
+    #  port: 3478
+    #- type: turn
+    #  host: turn.example.com
+    #  port: 3478
+    #  username: <username for the TURN server>
+    #  password: <password for the TURN server>
+
+    # Built-in signaling: the HTTP endpoint (GET/POST /v1/join) and LAN
+    # broadcast discovery. The endpoint listens on TCP at the server address,
+    # LAN discovery on UDP 0.0.0.0:7551.
+    builtin-signaling:
+      # Disable only if signaling is handled elsewhere (e.g. by a plugin calling
+      # NetherNetInterface::acceptOffer()), or clients cannot connect at all.
+      enabled: true
+
+      # TCP port of the HTTP signaling endpoint. 0 uses server-port from
+      # server.properties. Only change this behind a reverse proxy which
+      # forwards signaling to another port.
+      port: 0
+
+      # TLS for the HTTP signaling endpoint; plain HTTP is then redirected to
+      # HTTPS. Leave certificate and key empty to serve plain HTTP. Paths are
+      # relative to the data directory.
+      tls:
+        # PEM certificate or certificate chain.
+        certificate:
+        # PEM private key.
+        key:
+        # Optional private key passphrase, or file:<path> to read it from a file.
+        passphrase:
+
+      # Enable when HTTP signaling runs behind a reverse proxy (e.g. nginx,
+      # Caddy, Cloudflare) to take the client's real IP from a forwarded header.
+      reverse-proxy:
+        enabled: false
+        # Header carrying the client IP (e.g. X-Forwarded-For, X-Real-IP,
+        # CF-Connecting-IP).
+        header: X-Forwarded-For
+        # Proxy addresses or CIDR ranges whose forwarded headers are trusted;
+        # others are ignored to prevent spoofing. Required when enabled.
+        trusted-ips:
+        #- 127.0.0.1
+        #- 10.0.0.2
 
 #------------------------------------------------------------------------------#
 # Debugging

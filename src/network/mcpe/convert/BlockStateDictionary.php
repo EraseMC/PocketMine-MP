@@ -34,8 +34,11 @@ use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use function array_diff_key;
+use function array_filter;
 use function array_key_first;
 use function array_map;
+use function array_merge;
 use function count;
 use function get_debug_type;
 use function is_array;
@@ -94,11 +97,14 @@ final class BlockStateDictionary{
 
 	/**
 	 * @param BlockStateDictionaryEntry[] $states
+	 * @param Tag[][]                     $addedPropertyDefaults properties the upgrader added to all states of a block
 	 *
 	 * @phpstan-param list<BlockStateDictionaryEntry> $states
+	 * @phpstan-param array<string, array<string, Tag>> $addedPropertyDefaults
 	 */
 	public function __construct(
-		array $states
+		array $states,
+		private array $addedPropertyDefaults = []
 	){
 		$table = [];
 		$nbtSerializer = new LittleEndianNbtSerializer();
@@ -192,11 +198,15 @@ final class BlockStateDictionary{
 		$name = $data->getName();
 
 		$lookup = $this->stateDataToStateIdLookup[$name] ?? null;
-		return match(true){
-			$lookup === null => null,
-			is_int($lookup) => $lookup,
-			is_array($lookup) => $lookup[BlockStateDictionaryEntry::encodeStateProperties($data->getStates())] ?? $this->lookupStateIdWithFixedProperties($name, $data->getStates(), $lookup)
-		};
+		if($lookup === null || is_int($lookup)){
+			return $lookup;
+		}
+		$result = $lookup[BlockStateDictionaryEntry::encodeStateProperties($data->getStates())] ?? null;
+		if($result === null && isset($this->addedPropertyDefaults[$name])){
+			//this palette predates some properties of the block (e.g. stair corners), so look for the state with their defaults
+			$result = $lookup[BlockStateDictionaryEntry::encodeStateProperties(array_merge($data->getStates(), $this->addedPropertyDefaults[$name]))] ?? null;
+		}
+		return $result ?? $this->lookupStateIdWithFixedProperties($name, $data->getStates(), $lookup);
 	}
 
 	/**
@@ -342,6 +352,7 @@ final class BlockStateDictionary{
 		}
 
 		$entries = [];
+		$addedPropertyDefaults = [];
 
 		$uniqueNames = [];
 
@@ -363,10 +374,23 @@ final class BlockStateDictionary{
 			}
 			$newState = $upgrader->upgrade($state);
 			$uniqueName = $uniqueNames[$newState->getName()] ??= $newState->getName();
-			$entries[$i] = new BlockStateDictionaryEntry($uniqueName, $newState->getStates(), $meta, $newState->equals($state) ? null : $state);
+			$changed = !$newState->equals($state);
+			$entries[$i] = new BlockStateDictionaryEntry($uniqueName, $newState->getStates(), $meta, $changed ? $state : null);
+
+			//properties added by the upgrader with the same value in every state of the block are defaults
+			$added = $changed ? array_diff_key($newState->getStates(), $state->getStates()) : [];
+			if(!isset($addedPropertyDefaults[$uniqueName])){
+				$addedPropertyDefaults[$uniqueName] = $added;
+				continue;
+			}
+			foreach(Utils::stringifyKeys($addedPropertyDefaults[$uniqueName]) as $propertyName => $default){
+				if(!isset($added[$propertyName]) || !$added[$propertyName]->equals($default)){
+					unset($addedPropertyDefaults[$uniqueName][$propertyName]);
+				}
+			}
 		}
 
-		return new self($entries);
+		return new self($entries, array_filter($addedPropertyDefaults, fn(array $properties) => count($properties) !== 0));
 	}
 
 	public static function loadFromString(string $blockPaletteContents, string $metaMapContents) : self{

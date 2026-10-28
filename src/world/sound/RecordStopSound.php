@@ -35,12 +35,12 @@ class RecordStopSound extends ProtocolSound{
 	}
 
 	public function encode(Vector3 $pos) : array{
-		if($this->protocolId >= ProtocolInfo::PROTOCOL_1_26_50){
-			return [
-				ClientboundUpdateSoundDataPacket::create($this->serverSoundHandleId, "", SoundDataEvent::stop(), null, null, null, null, null, null)
-			];
+		if($this->protocolId < ProtocolInfo::PROTOCOL_1_26_50){
+			return [LevelSoundEventPacket::nonActorSound(LevelSoundEvent::RECORD_NULL, $pos, false)];
 		}
 
-		return [LevelSoundEventPacket::nonActorSound(LevelSoundEvent::RECORD_NULL, $pos, false)];
+		return [
+			ClientboundUpdateSoundDataPacket::create($this->serverSoundHandleId, SoundDataEvent::stop())
+		];
 	}
 }

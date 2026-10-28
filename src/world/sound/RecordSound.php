@@ -40,7 +40,7 @@ class RecordSound extends ProtocolSound{
 	}
 
 	public function encode(Vector3 $pos) : array{
-		$soundEvent = match ($this->recordType) {
+		$sound = match($this->recordType){
 			RecordType::DISK_13 => LevelSoundEvent::RECORD_13,
 			RecordType::DISK_5 => LevelSoundEvent::RECORD_5,
 			RecordType::DISK_CAT => LevelSoundEvent::RECORD_CAT,
@@ -63,13 +63,13 @@ class RecordSound extends ProtocolSound{
 			RecordType::DISK_WAIT => LevelSoundEvent::RECORD_WAIT
 		};
 
-		if($this->protocolId >= ProtocolInfo::PROTOCOL_1_26_50){
-			return [
-				PlaySoundPacket::create($soundEvent, $pos->x, $pos->y, $pos->z, 1, 1, 0, true, $this->serverSoundHandleId, null),
-				RecordStartedPacket::create(BlockPosition::fromVector3($pos), $this->serverSoundHandleId),
-			];
+		if($this->protocolId < ProtocolInfo::PROTOCOL_1_26_50){
+			return [LevelSoundEventPacket::nonActorSound($sound, $pos, false)];
 		}
 
-		return [LevelSoundEventPacket::nonActorSound($soundEvent, $pos, false)];
+		return [
+			PlaySoundPacket::create($sound, $pos->x, $pos->y, $pos->z, 1, 1, 0, true, $this->serverSoundHandleId, null),
+			RecordStartedPacket::create(BlockPosition::fromVector3($pos), $this->serverSoundHandleId),
+		];
 	}
 }

@@ -74,6 +74,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 
 			$typeConverter = $this->session->getTypeConverter();
 
+			//this data is only available for the latest version
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_26_50){
 				$this->session->getLogger()->debug("Sending JigsawStructureData");
 				$this->session->sendDataPacket(StaticPacketCache::getInstance()->getJigsawStructureData());
@@ -92,6 +93,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 			$levelSettings->hasAchievementsDisabled = true;
 			$levelSettings->time = $world->getTime();
 			$levelSettings->eduEditionOffer = 0;
+			$levelSettings->hasEduFeaturesEnabled = true; //required for education items to render
 			$levelSettings->rainLevel = 0; //TODO: implement these properly
 			$levelSettings->lightningLevel = 0;
 			$levelSettings->commandsEnabled = true;
