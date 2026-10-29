@@ -1027,7 +1027,10 @@ class NetworkSession{
 		if($error !== null){
 			$this->disconnectWithError(
 				reason: KnownTranslationFactory::pocketmine_disconnect_invalidSession($error),
-				disconnectScreenMessage: KnownTranslationFactory::pocketmine_disconnect_error_authentication()
+				//a client that claims Xbox Live authentication without an Xbox identity failed to sign in
+				disconnectScreenMessage: $authenticated && !($this->info instanceof XboxLivePlayerInfo) ?
+					KnownTranslationFactory::disconnectionScreen_notAuthenticated() :
+					KnownTranslationFactory::pocketmine_disconnect_error_authentication()
 			);
 
 			return;

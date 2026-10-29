@@ -129,7 +129,9 @@ class LoginPacketHandler extends PacketHandler{
 			try{
 				[$headerArray, $claimsArray,] = JwtUtils::parse($authInfo->Token);
 			}catch(JwtException $e){
-				throw PacketHandlingException::wrap($e, "Error parsing authentication token");
+				//clients whose Xbox Live sign-in failed still claim full authentication, but send no usable token
+				$this->session->disconnect("Not authenticated: " . $e->getMessage(), KnownTranslationFactory::disconnectionScreen_notAuthenticated());
+				return true;
 			}
 			$header = $this->mapXboxTokenHeader($headerArray);
 			$claims = $this->mapXboxTokenBody($claimsArray);
