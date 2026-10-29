@@ -65,6 +65,7 @@ use function is_string;
 use function json_decode;
 use function md5;
 use function ord;
+use function preg_match;
 use function substr;
 use const FILTER_VALIDATE_IP;
 use const JSON_THROW_ON_ERROR;
@@ -74,6 +75,12 @@ use const JSON_THROW_ON_ERROR;
  */
 class LoginPacketHandler extends PacketHandler{
 	private const PROXIED_IP_CLAIM = "Waterdog_IP";
+	private const PROXIED_AUTH_CLAIM = "Waterdog_Auth";
+	private const PROXIED_XUID_CLAIM = "Waterdog_XUID";
+	private const PROXIED_MID_CLAIM = "Waterdog_MID";
+
+	/** XUID of a player whose Xbox Live sign-in a trusted proxy has already verified */
+	private ?string $proxiedXuid = null;
 
 	/**
 	 * @phpstan-param \Closure(PlayerInfo) : void $playerInfoConsumer
@@ -164,7 +171,7 @@ class LoginPacketHandler extends PacketHandler{
 
 				$legacyUuid = Uuid::fromString($claims->leguuid);
 				$username = $claims->xname;
-				$xuid = "";
+				$xuid = $this->proxiedXuid ?? "";
 
 				$selfSignedKey = base64_decode($claims->cpk, strict: true);
 				if($selfSignedKey === false){
@@ -246,7 +253,7 @@ class LoginPacketHandler extends PacketHandler{
 				}
 				$legacyUuid = Uuid::fromString($claims->identity);
 				$username = $claims->displayName;
-				$xuid = $this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? "" : $claims->XUID;
+				$xuid = $this->proxiedXuid ?? ($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? "" : $claims->XUID);
 
 				$authRequired = $this->processLoginCommon($packet, $username, $legacyUuid, $xuid, $clientData);
 				if($authRequired === null){
@@ -408,12 +415,22 @@ class LoginPacketHandler extends PacketHandler{
 		}
 
 		$proxiedIp = $clientDataClaims[self::PROXIED_IP_CLAIM] ?? null;
-		unset($clientDataClaims[self::PROXIED_IP_CLAIM]);
-		if($proxiedIp !== null && $this->server->getTrustedProxies()->contains($this->session->getIp())){
-			if(!is_string($proxiedIp) || filter_var($proxiedIp, FILTER_VALIDATE_IP) === false){
-				throw new PacketHandlingException("Trusted proxy sent an invalid player address");
+		$proxiedAuth = $clientDataClaims[self::PROXIED_AUTH_CLAIM] ?? null;
+		$proxiedXuid = $clientDataClaims[self::PROXIED_XUID_CLAIM] ?? null;
+		unset($clientDataClaims[self::PROXIED_IP_CLAIM], $clientDataClaims[self::PROXIED_AUTH_CLAIM], $clientDataClaims[self::PROXIED_XUID_CLAIM], $clientDataClaims[self::PROXIED_MID_CLAIM]);
+		if($this->server->getTrustedProxies()->contains($this->session->getIp())){
+			if($proxiedAuth === true){
+				if(!is_string($proxiedXuid) || preg_match('/^[1-9]\d{0,19}$/', $proxiedXuid) !== 1){
+					throw new PacketHandlingException("Trusted proxy sent an invalid player XUID");
+				}
+				$this->proxiedXuid = $proxiedXuid;
 			}
-			$this->session->setProxiedIp($proxiedIp);
+			if($proxiedIp !== null){
+				if(!is_string($proxiedIp) || filter_var($proxiedIp, FILTER_VALIDATE_IP) === false){
+					throw new PacketHandlingException("Trusted proxy sent an invalid player address");
+				}
+				$this->session->setProxiedIp($proxiedIp);
+			}
 		}
 
 		$mapper = $this->defaultJsonMapper("ClientData JWT body");
@@ -445,10 +462,23 @@ class LoginPacketHandler extends PacketHandler{
 		);
 	}
 
+	/**
+	 * A self-signed login relayed by a trusted proxy is as authenticated as the proxy found the player to be.
+	 *
+	 * @phpstan-return \Closure(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) : void
+	 */
+	private function selfSignedAuthCallback() : \Closure{
+		if($this->proxiedXuid === null){
+			return $this->authCallback;
+		}
+		$callback = $this->authCallback;
+		return static fn(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) => $callback($error === null || $isAuthenticated, $authRequired, $error, $clientPubKey);
+	}
+
 	protected function processSelfSignedLogin(string $token, string $clientPublicKey, string $clientData, bool $authRequired) : void{
 		$this->session->setHandler(null); //drop packets received during login verification
 
-		$this->server->getAsyncPool()->submitTask(new ProcessSelfSignedLoginTask($token, $clientPublicKey, $clientData, $authRequired, onCompletion: $this->authCallback));
+		$this->server->getAsyncPool()->submitTask(new ProcessSelfSignedLoginTask($token, $clientPublicKey, $clientData, $authRequired, onCompletion: $this->selfSignedAuthCallback()));
 	}
 
 	/**
@@ -472,7 +502,7 @@ class LoginPacketHandler extends PacketHandler{
 				$rootAuthKeysDer[] = $der;
 			}
 		}
-		$this->server->getAsyncPool()->submitTask(new ProcessLegacyLoginTask($legacyCertificate, $clientDataJwt, rootAuthKeysDer: $rootAuthKeysDer, authRequired: $authRequired, onCompletion: $this->authCallback));
+		$this->server->getAsyncPool()->submitTask(new ProcessLegacyLoginTask($legacyCertificate, $clientDataJwt, rootAuthKeysDer: $rootAuthKeysDer, authRequired: $authRequired, onCompletion: $this->selfSignedAuthCallback()));
 	}
 
 	private function defaultJsonMapper(string $logContext) : \JsonMapper{
