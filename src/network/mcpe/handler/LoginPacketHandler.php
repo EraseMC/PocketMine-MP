@@ -82,6 +82,9 @@ class LoginPacketHandler extends PacketHandler{
 	/** XUID of a player whose Xbox Live sign-in a trusted proxy has already verified */
 	private ?string $proxiedXuid = null;
 
+	/** Whether the login was relayed by a trusted proxy, whose own account of the sign-in is the only one that counts */
+	private bool $proxied = false;
+
 	/**
 	 * @phpstan-param \Closure(PlayerInfo) : void $playerInfoConsumer
 	 * @phpstan-param \Closure(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) : void $authCallback
@@ -253,7 +256,7 @@ class LoginPacketHandler extends PacketHandler{
 				}
 				$legacyUuid = Uuid::fromString($claims->identity);
 				$username = $claims->displayName;
-				$xuid = $this->proxiedXuid ?? ($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? "" : $claims->XUID);
+				$xuid = $this->proxiedXuid ?? ($this->proxied || $this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93 ? "" : $claims->XUID);
 
 				$authRequired = $this->processLoginCommon($packet, $username, $legacyUuid, $xuid, $clientData);
 				if($authRequired === null){
@@ -419,6 +422,7 @@ class LoginPacketHandler extends PacketHandler{
 		$proxiedXuid = $clientDataClaims[self::PROXIED_XUID_CLAIM] ?? null;
 		unset($clientDataClaims[self::PROXIED_IP_CLAIM], $clientDataClaims[self::PROXIED_AUTH_CLAIM], $clientDataClaims[self::PROXIED_XUID_CLAIM], $clientDataClaims[self::PROXIED_MID_CLAIM]);
 		if($this->server->getTrustedProxies()->contains($this->session->getIp())){
+			$this->proxied = true;
 			if($proxiedAuth === true){
 				if(!is_string($proxiedXuid) || preg_match('/^[1-9]\d{0,19}$/', $proxiedXuid) !== 1){
 					throw new PacketHandlingException("Trusted proxy sent an invalid player XUID");
@@ -463,16 +467,18 @@ class LoginPacketHandler extends PacketHandler{
 	}
 
 	/**
-	 * A self-signed login relayed by a trusted proxy is as authenticated as the proxy found the player to be.
+	 * A self-signed login relayed by a trusted proxy is as authenticated as the proxy found the player to be:
+	 * the proxy signs every chain it relays, so the chain itself proves nothing.
 	 *
 	 * @phpstan-return \Closure(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) : void
 	 */
 	private function selfSignedAuthCallback() : \Closure{
-		if($this->proxiedXuid === null){
+		if(!$this->proxied){
 			return $this->authCallback;
 		}
 		$callback = $this->authCallback;
-		return static fn(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) => $callback($error === null || $isAuthenticated, $authRequired, $error, $clientPubKey);
+		$verified = $this->proxiedXuid !== null;
+		return static fn(bool $isAuthenticated, bool $authRequired, Translatable|string|null $error, ?string $clientPubKey) => $callback($verified && $error === null, $authRequired, $error, $clientPubKey);
 	}
 
 	protected function processSelfSignedLogin(string $token, string $clientPublicKey, string $clientData, bool $authRequired) : void{
