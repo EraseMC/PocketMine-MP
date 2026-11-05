@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateSerializeException;
@@ -275,10 +276,42 @@ final class BlockTranslator{
 		}catch(BlockStateSerializeException){
 			//TODO: this will swallow any error caused by invalid block properties; this is not ideal, but it should be
 			//covered by unit tests, so this is probably a safe assumption.
-			$networkId = $this->fallbackStateId;
+			$networkId = $this->substituteNetworkId($internalStateId) ?? $this->fallbackStateId;
 		}
 
 		return $this->networkIdCache[$internalStateId] = $networkId;
+	}
+
+	/**
+	 * Old palettes lack blocks such as cherry and azalea. Legacy clients disconnect on chunks full of info_update
+	 * stand-ins, so blocks with a close relative in the old palette are shown as that relative instead.
+	 */
+	private function substituteNetworkId(int $internalStateId) : ?int{
+		try{
+			$name = $this->blockStateSerializer->serialize($internalStateId)->getName();
+		}catch(BlockStateSerializeException){
+			return null;
+		}
+
+		$substitute = match($name){
+			BlockTypeNames::CHERRY_LEAVES, BlockTypeNames::AZALEA_LEAVES, BlockTypeNames::AZALEA_LEAVES_FLOWERED,
+			BlockTypeNames::AZALEA, BlockTypeNames::FLOWERING_AZALEA => VanillaBlocks::OAK_LEAVES()->setNoDecay(true),
+			BlockTypeNames::CHERRY_LOG, BlockTypeNames::CHERRY_WOOD, BlockTypeNames::STRIPPED_CHERRY_LOG,
+			BlockTypeNames::STRIPPED_CHERRY_WOOD => VanillaBlocks::OAK_LOG(),
+			BlockTypeNames::CHERRY_PLANKS => VanillaBlocks::OAK_PLANKS(),
+			BlockTypeNames::PINK_PETALS => VanillaBlocks::AIR(),
+			default => null,
+		};
+
+		if($substitute === null){
+			return null;
+		}
+
+		try{
+			return $this->blockStateDictionary->lookupStateIdFromData($this->blockStateSerializer->serialize($substitute->getStateId()));
+		}catch(BlockStateSerializeException){
+			return null;
+		}
 	}
 
 	/**

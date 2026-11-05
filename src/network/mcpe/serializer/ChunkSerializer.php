@@ -41,6 +41,7 @@ use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
+use function array_unique;
 use function count;
 use function get_class;
 use function str_repeat;
@@ -170,6 +171,10 @@ final class ChunkSerializer{
 		$blockStateDictionary = $blockTranslator->getBlockStateDictionary();
 
 		foreach($layers as $blocks){
+			$networkPalette = false;
+			if(!$persistentBlockStates && $protocolId < ProtocolInfo::PROTOCOL_1_20_0){
+				[$blocks, $networkPalette] = self::legacyLayer($blocks, $blockTranslator);
+			}
 			$bitsPerBlock = $blocks->getBitsPerBlock();
 			if($protocolId < ProtocolInfo::PROTOCOL_1_17_30 && $bitsPerBlock === 0){
 				// Zero-bit palettes were introduced in 1.17.30.
@@ -200,10 +205,38 @@ final class ChunkSerializer{
 				//we would use writeSignedIntArray() here, but the gains of writing in batch are negated by the cost of
 				//allocating a temporary array for the mapped palette IDs, especially for small palettes
 				foreach($palette as $p){
-					VarInt::writeSignedInt($stream, $blockTranslator->internalIdToNetworkId($p));
+					VarInt::writeSignedInt($stream, $networkPalette ? $p : $blockTranslator->internalIdToNetworkId($p));
 				}
 			}
 		}
+	}
+
+	/**
+	 * Legacy clients reject palettes listing the same network ID twice, which happens once several states fall back
+	 * to one block missing from their palette. Such layers are rebuilt with network IDs as palette values.
+	 *
+	 * @return array{PalettedBlockArray, bool}
+	 */
+	private static function legacyLayer(PalettedBlockArray $blocks, BlockTranslator $blockTranslator) : array{
+		$mapped = [];
+		foreach($blocks->getPalette() as $p){
+			$mapped[] = $blockTranslator->internalIdToNetworkId($p);
+		}
+		if(count(array_unique($mapped)) === count($mapped)){
+			return [$blocks, false];
+		}
+
+		$remapped = new PalettedBlockArray($mapped[0]);
+		for($x = 0; $x < SubChunk::EDGE_LENGTH; ++$x){
+			for($y = 0; $y < SubChunk::EDGE_LENGTH; ++$y){
+				for($z = 0; $z < SubChunk::EDGE_LENGTH; ++$z){
+					$remapped->set($x, $y, $z, $blockTranslator->internalIdToNetworkId($blocks->get($x, $y, $z)));
+				}
+			}
+		}
+		$remapped->collectGarbage();
+
+		return [$remapped, true];
 	}
 
 	private static function serializeBiomePalette(PalettedBlockArray $biomePalette, LegacyBiomeIdToStringIdMap $biomeIdMap, ByteBufferWriter $stream) : void{
